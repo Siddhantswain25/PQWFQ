@@ -11,10 +11,11 @@ public class System {
 
     System() {
         lambda = 1.0;
-        mi = 1.0;
+        mi = 10;
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
+        initialize();
     }
 
     System(double lambda, double mi) {
@@ -23,6 +24,11 @@ public class System {
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
+        initialize();
+    }
+
+    private void initialize() {
+        scheduleNextArrival();
     }
 
     public void addEvent(Event event) {
@@ -31,20 +37,32 @@ public class System {
 
     public void processNextEvent() {
         Event event = eventList.popNextEvent();
-        if (event.getEventType() == EventType.ARRIVAL)
-            processArrival();
-        else
-            processDeparture();
+        if(event != null) {
+            double previousTime = Clock.getCurrentTime();
+            Clock.incrementTime(event.getTime());
+            double timeDelta = Clock.getCurrentTime() - previousTime;
+
+            if(server.isBusy())
+                serverBusyTime += timeDelta;
+
+            queueTime += server.getQueueSize() * timeDelta;
+
+            if (event.getEventType() == EventType.ARRIVAL)
+                processArrival();
+            else
+                processDeparture();
+        }
     }
 
     private void processArrival() {
+        scheduleNextArrival();
         if(server.isBusy()) {
             server.addClient(Clock.getCurrentTime());
         }
         else {
             server.setIsBusy(true);
             addDelayToStatistics(0.0);
-            addEvent(new Event(EventType.DEPARTURE, RandomGenerator.getPoissonRandom(mi)));
+            scheduleNextDeparture();
         }
     }
 
@@ -52,11 +70,20 @@ public class System {
         if(server.isQueueEmpty()) {
             server.setIsBusy(false);
         } else {
-            Event event = eventList.popNextEvent();
-            double delay = Clock.getCurrentTime() - event.getTime();
+            double delay = Clock.getCurrentTime() - server.handleNextClient();
             addDelayToStatistics(delay);
-            addEvent(new Event(EventType.DEPARTURE, RandomGenerator.getPoissonRandom(mi)));
+            scheduleNextDeparture();
         }
+    }
+
+    private void scheduleNextArrival() {
+        double nextArrivalTime = Clock.getCurrentTime() + RandomGenerator.getExpRandom(lambda);
+        addEvent(new Event(EventType.ARRIVAL, nextArrivalTime));
+    }
+
+    private void scheduleNextDeparture(){
+        double nextDepartureTime = Clock.getCurrentTime() + RandomGenerator.getPoissonRandom(mi);
+        addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
     }
 
     public boolean isEventListEmpty() {
@@ -92,14 +119,17 @@ public class System {
 
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Number of delays/serviced customers: " + numberOfDelays);
-        java.lang.System.out.println("Total delay:\t" + totalDelay);
-        java.lang.System.out.println("Q(t):\t" + queueTime);
-        java.lang.System.out.println("B(t):\t" + serverBusyTime);
+        java.lang.System.out.println("Total delay: " + totalDelay);
+        java.lang.System.out.println("Q(t): " + queueTime);
+        java.lang.System.out.println("B(t): " + serverBusyTime);
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Rho - average system load");
+        java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Expected Rho:\t" + expectedRho);
-        java.lang.System.out.println("Actual Rho:\t" + actualRho);
+        java.lang.System.out.println("Actual Rho:\t\t" + actualRho);
+        java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("W - average waiting time");
+        java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Expected W:\t" + expectedW);
         java.lang.System.out.println("Expected W:\t" + expectedW2 + "\t(formula from lecture)");
         java.lang.System.out.println("Actual W:\t" + actualW);

@@ -21,11 +21,15 @@ public class Server {
         queue.add(arrivalTime);
     }
 
-    public void handleNextClient() {
-        queue.poll();
+    public double handleNextClient() {
+        return queue.poll();
     }
 
     public boolean isQueueEmpty() {
         return queue.isEmpty();
+    }
+
+    public int getQueueSize() {
+        return queue.size();
     }
 }
