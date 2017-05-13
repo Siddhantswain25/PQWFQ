@@ -20,7 +20,7 @@ public class Clock {
         return getInstance().currentTime;
     }
 
-    public static void incrementTime(double time) {
-        getInstance().currentTime += time;
+    public static void setTime(double time) {
+        getInstance().currentTime = time;
     }
 }

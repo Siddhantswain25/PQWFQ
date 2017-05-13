@@ -19,19 +19,8 @@ class SystemTest {
     }
 
     @Test
-    void addEvent() {
-        system.addEvent(new Event(EventType.ARRIVAL, 0.0));
+    void initialize() {
         assertFalse(system.isEventListEmpty());
-    }
-
-    @Test
-    void processNextEvent() {
-        system.addEvent(new Event(EventType.ARRIVAL, 0.0));
-        assertFalse(system.isEventListEmpty());
-        system.processNextEvent();
-        assertEquals(EventType.DEPARTURE, system.getNextEventType());
-        system.processNextEvent();
-        assertTrue(system.isEventListEmpty());
     }
 
 }
