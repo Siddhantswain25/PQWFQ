@@ -1,16 +1,20 @@
 public class System {
     private double lambda;
     private double mi;
+
+    private double totalServiceTime;
+    private int numberOfArrivals;
+    private double sumOfArrivalIntervals;
+
     private int numberOfDelays;
     private double totalDelay;
     private double queueTime;
     private double serverBusyTime;
-    private double serverFreeTime;
-    private int timesServerWasNotBusy;
+
+    private int peakQueueSize;
 
     private EventList eventList;
     private Server server;
-
 
     System() {
         lambda = 1.0;
@@ -41,37 +45,34 @@ public class System {
     public void processNextEvent() {
         Event event = eventList.popNextEvent();
 
-        if(event != null) {
-            double previousTime = Clock.getCurrentTime();
-            Clock.setTime(event.getTime());
-            double timeDelta = Clock.getCurrentTime() - previousTime;
+        double previousTime = Clock.getCurrentTime();
+        Clock.setTime(event.getTime());
+        double timeDelta = Clock.getCurrentTime() - previousTime;
 
-            updateStatistics(timeDelta);
+        updateStatistics(timeDelta);
 
-            if (event.getEventType() == EventType.ARRIVAL)
-                processArrival();
-            else
-                processDeparture();
-        } else {
-            java.lang.System.out.println("Allarme! Event was NULL!");
-        }
+        if (event.getEventType() == EventType.ARRIVAL)
+            processArrival();
+        else
+            processDeparture();
     }
 
     private void updateStatistics(double timeDelta) {
-        if(server.isBusy())
+        if(isServerBusy())
             serverBusyTime += timeDelta;
-        else
-            serverFreeTime += timeDelta;
         queueTime += server.getQueueSize() * timeDelta;
+
+        if (server.getQueueSize() > peakQueueSize)
+            peakQueueSize = server.getQueueSize();
     }
 
     private void processArrival() {
+        numberOfArrivals++;
         scheduleNextArrival();
         if(server.isBusy()) {
             server.addClient(Clock.getCurrentTime());
         }
         else {
-            timesServerWasNotBusy += 1;
             server.setIsBusy(true);
             addDelayToStatistics(0.0);
             scheduleNextDeparture();
@@ -82,22 +83,30 @@ public class System {
         if(server.isQueueEmpty()) {
             server.setIsBusy(false);
         } else {
-            double waitingTime = Clock.getCurrentTime() - server.handleNextClient();
+            double clientArrivalTime = server.handleNextClient();
+            double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
             addDelayToStatistics(waitingTime);
             scheduleNextDeparture();
         }
     }
 
     private void scheduleNextArrival() {
-        double nextArrivalTime = Clock.getCurrentTime() + RandomGenerator.getPoissonRandom(lambda);
-        //double nextArrivalTime = Clock.getCurrentTime() + RandomGenerator.getExpRandom(lambda);
+        double timeToNextArrival = RandomGenerator.getExpRandom(lambda);
+        sumOfArrivalIntervals += timeToNextArrival;
+        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime));
     }
 
     private void scheduleNextDeparture(){
-        //double nextDepartureTime = Clock.getCurrentTime() + RandomGenerator.getPoissonRandom(mi);
-        double nextDepartureTime = Clock.getCurrentTime() + RandomGenerator.getExpRandom(1/mi);
+        double serviceTime = RandomGenerator.getExpRandom(mi);
+        totalServiceTime += serviceTime;
+        double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
+    }
+
+    private void addDelayToStatistics(double delay) {
+        totalDelay += delay;
+        numberOfDelays++;
     }
 
     public boolean isEventListEmpty() {
@@ -108,16 +117,18 @@ public class System {
         return server.isBusy();
     }
 
+    public int getNumberOfArrivals() {
+        return numberOfArrivals;
+    }
+
     public void resetAllStatistics() {
+        totalServiceTime = 0.0;
+        numberOfArrivals = 0;
         numberOfDelays = 0;
         totalDelay = 0.0;
         queueTime = 0.0;
         serverBusyTime = 0.0;
-    }
-
-    private void addDelayToStatistics(double delay) {
-        totalDelay += delay;
-        numberOfDelays++;
+        peakQueueSize = 0;
     }
 
     public void displayAllStatistics() {
@@ -130,25 +141,30 @@ public class System {
         double qn = queueTime/totalSimTime;
         double un = serverBusyTime/totalSimTime;
 
+        double avgServiceTime = totalServiceTime/numberOfDelays;
+        double avgArrivalInterval = sumOfArrivalIntervals/numberOfArrivals;
+
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("------------  SIMULATION RESULTS  -------------");
         java.lang.System.out.println("-----------------------------------------------");
+        java.lang.System.out.println("lambda:\t" + lambda + "\nmi:\t" + mi);
         java.lang.System.out.println("Total simulation time: " + totalSimTime);
+        java.lang.System.out.println("Number of arrivals: " + numberOfArrivals);
         java.lang.System.out.println("Number of delays/serviced customers: " + numberOfDelays);
         java.lang.System.out.println("Total delay: " + totalDelay);
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
-        //java.lang.System.out.println("!B(t): " + serverFreeTime);
-        //java.lang.System.out.println("Times server wasn't busy when client arrived: " + timesServerWasNotBusy);
-        //java.lang.System.out.println("Clients left in queue: " + server.getQueueSize());
+        java.lang.System.out.println("Peak queue size: " + peakQueueSize);
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Rho - average system load\nW - average waiting time");
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Expected Rho:\t" + expectedRho);
         java.lang.System.out.println("Expected W:\t\t" + expectedW);
-        java.lang.System.out.println("d(n}:\t" + dn);
-        java.lang.System.out.println("q(n}:\t" + qn);
-        java.lang.System.out.println("u(n}:\t" + un);
+        java.lang.System.out.println("d(n):\t" + dn + "  (avg waiting time)");
+        java.lang.System.out.println("q(n):\t" + qn + "  (avg queue size)");
+        java.lang.System.out.println("u(n):\t" + un + "   (avg system load)");
+        java.lang.System.out.println("avgServiceTime:\t\t" + avgServiceTime);
+        java.lang.System.out.println("avgArrivalInterval:\t" + avgArrivalInterval);
         java.lang.System.out.println("-----------------------------------------------");
     }
 
@@ -160,7 +176,6 @@ public class System {
         java.lang.System.out.println("Total delay: " + totalDelay);
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
-        java.lang.System.out.println("Times server wasn't busy: " + timesServerWasNotBusy);
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
         java.lang.System.out.println("Clients in queue: " + server.getQueueSize());
         java.lang.System.out.println("Next event: " + eventList.peekNextEvent().getEventType());

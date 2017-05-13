@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ServerTest {
 
-    Server server;
+    private Server server;
 
     @BeforeEach
     void setUp() {
@@ -22,7 +22,21 @@ class ServerTest {
     void addClient() {
         server.addClient(0.0);
         assertFalse(server.isQueueEmpty());
-        server.handleNextClient();
+    }
+
+    @Test
+    void handleNextClient() {
+        server.addClient(0.0);
+        server.addClient(1.0);
+        server.addClient(2.0);
+        server.addClient(3.0);
+        server.addClient(4.0);
+        server.addClient(5.0);
+
+        assertFalse(server.isQueueEmpty());
+        for(int i = 0; i < 6; i++) {
+            assertEquals((double)i, server.handleNextClient());
+        }
         assertTrue(server.isQueueEmpty());
     }
 }

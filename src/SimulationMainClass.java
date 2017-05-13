@@ -2,16 +2,15 @@ import java.lang.*;
 
 public class SimulationMainClass {
     public static void main(String[] args) {
-        System system = new System(2, 4);
+
+        System system = new System(1, 10);
         //system.displayTrace();
-        double timeLimit = 1E8;
-        while(Clock.getCurrentTime() < timeLimit) {
+
+        int N = 70000000;
+        while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             //system.displayTrace();
         }
         system.displayAllStatistics();
-    }
-
-    private static void progressBar(double progressPercentage) {
     }
 }

@@ -1,4 +1,5 @@
 import java.lang.*;
+import java.lang.System;
 import java.util.ArrayList;
 import java.util.Random;
 import static java.lang.StrictMath.log;
@@ -9,35 +10,37 @@ between 0.0 and 1.0 from this random number generator's sequence.
  */
 
 public abstract class RandomGenerator {
+
+    private final static double MIN_SERVICE_TIME = 0.2;
+    private final static double MIN_ARRIVAL_INTERVAL = 0.000001;
+
     public static double getExpRandom(double mean) { //service times
-        Random r = new Random();
+
+        Random r = new Random();/*
         double random;
         do {
             random = r.nextDouble();
         } while (random == 0.0);
 
-        return -mean*log(random);
+        double result = -mean*log(random);*/
+        double result = Math.log(1-r.nextDouble())/(-mean);
+        if(result != 0)
+            return result;
+        else
+            return MIN_ARRIVAL_INTERVAL;
     }
 
     public static double getPoissonRandom(double mean) { //arivals
         Random r = new Random();
-        /*
-        double limit = Math.exp(-mean);
-        int k = 0;
-        double p = 1.0;
-        do {
-            p = p * r.nextDouble();
-            k++;
-        } while (p > limit);
-        return k - 1;
-        */
-
         double limit = Math.exp(-mean);
         double prod = r.nextDouble();
         int n;
         for (n = 0; prod >= limit; n++)
             prod *= r.nextDouble();
-        return n;
+        if (n != 0)
+            return n;
+        else
+            return MIN_SERVICE_TIME;
     }
 
     public static void drawHistogram(ArrayList<Double> numbers) {
@@ -51,6 +54,7 @@ public abstract class RandomGenerator {
             else
                 array[rounded] += max_height;
         }
+        System.out.println("----------- HISTOGRAM -----------");
         for(long d : array) {
             java.lang.System.out.println(convertToStars((int)(d/size)));
         }
@@ -62,5 +66,12 @@ public abstract class RandomGenerator {
             builder.append('*');
         }
         return builder.toString();
+    }
+
+    public static void printAllNumbers(ArrayList<Double> numbers) {
+        System.out.println("----------- START -----------");
+        for(Double d : numbers)
+            System.out.println(d);
+        System.out.println("------------ END ------------");
     }
 }

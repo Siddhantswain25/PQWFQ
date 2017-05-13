@@ -6,19 +6,16 @@ import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
 
-
-import static org.junit.jupiter.api.Assertions.*;
-
 class RandomGeneratorTest {
-    ArrayList<Double> times;
-    double lambda;
-    double mi;
+    private ArrayList<Double> times;
+    private double lambda;
+    private double mi;
 
     @BeforeEach
     void setUp() {
         times = new ArrayList<>();
-        lambda = 4;
-        mi = 0.5;
+        lambda = 3;
+        mi = 6;
     }
 
     @AfterEach
@@ -28,12 +25,15 @@ class RandomGeneratorTest {
 
     @Test
     void getExpRandom() {
-        for(int i = 0; i < 10000; i++) {
+        for(int i = 0; i < 1000; i++) {
             double nextDepartureTime = RandomGenerator.getExpRandom(1/mi);
             times.add(nextDepartureTime);
         }
 
         System.out.println("------  EXP ------");
+        System.out.println("---- mi = " + mi + " ----");
+        RandomGenerator.printAllNumbers(times);
+        System.out.println("---- mi = " + mi + " ----");
         RandomGenerator.drawHistogram(times);
     }
 
@@ -45,6 +45,9 @@ class RandomGeneratorTest {
         }
 
         System.out.println("----  POISSON ----");
+        System.out.println("-- lambda = " + lambda + " --");
+        RandomGenerator.printAllNumbers(times);
+        System.out.println("-- lambda = " + lambda + " --");
         RandomGenerator.drawHistogram(times);
     }
 

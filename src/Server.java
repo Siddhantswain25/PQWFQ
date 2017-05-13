@@ -1,11 +1,12 @@
-import java.util.PriorityQueue;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Server {
     private boolean isBusy;
-    private PriorityQueue<Double> queue; //TODO: add more queues later!
+    private Queue<Double> queue; //TODO: add more queues later!
 
     Server() {
-        queue = new PriorityQueue<>();
+        queue = new LinkedList<>();
     }
 
     public boolean isBusy() {
