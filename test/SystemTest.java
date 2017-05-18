@@ -10,7 +10,10 @@ class SystemTest {
 
     @BeforeEach
     void setUp() {
-        system =  new System();
+        Server server = new Server();
+        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0));
+        system =  new System(server);
+
     }
 
     @AfterEach

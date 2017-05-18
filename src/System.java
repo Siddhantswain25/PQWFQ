@@ -1,3 +1,5 @@
+import java.util.Map;
+
 public class System {
     private double lambda;
     private double mi;
@@ -11,14 +13,12 @@ public class System {
     private double queueTime;
     private double serverBusyTime;
 
-    private int peakQueueSize;
-
     private EventList eventList;
     private Server server;
 
     System() {
         lambda = 1.0;
-        mi = 10;
+        mi = 10.0;
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
@@ -34,9 +34,23 @@ public class System {
         initialize();
     }
 
-    private void initialize() {
-        scheduleNextArrival();
+    System(Server server) {
+        this.lambda = 1.0;
+        this.mi = 10.0;
+        resetAllStatistics();
+        eventList = new EventList();
+        this.server = server;
+        initialize();
     }
+
+    private void initialize() {
+        /*for(int id : server.getSetOfQueueIds()) {
+            scheduleNextArrival(id);
+        }*/
+
+        server.forEachQueue((k,v) -> scheduleNextArrival(k)); //TODO: check if it works!
+    }
+    //TODO: add initial arrival for each queue - will it simulate random start of each event source? Also bad smell.
 
     private void addEvent(Event event) {
         eventList.addEvent(event);
@@ -52,7 +66,7 @@ public class System {
         updateStatistics(timeDelta);
 
         if (event.getEventType() == EventType.ARRIVAL)
-            processArrival();
+            processArrival(event.getQueueId());
         else
             processDeparture();
     }
@@ -60,17 +74,17 @@ public class System {
     private void updateStatistics(double timeDelta) {
         if(isServerBusy())
             serverBusyTime += timeDelta;
-        queueTime += server.getQueueSize() * timeDelta;
 
-        if (server.getQueueSize() > peakQueueSize)
-            peakQueueSize = server.getQueueSize();
+        for(QueuePQWFQ queue : server.getSetOfQueues()) {
+            queueTime += queue.size() * timeDelta;
+        }
     }
 
-    private void processArrival() {
+    private void processArrival(int queueId) {
         numberOfArrivals++;
-        scheduleNextArrival();
+        scheduleNextArrival(queueId);
         if(server.isBusy()) {
-            server.addClient(Clock.getCurrentTime());
+            server.addClient(queueId, Clock.getCurrentTime()); //TODO: add distincion by queue id
         }
         else {
             server.setIsBusy(true);
@@ -80,21 +94,22 @@ public class System {
     }
 
     private void processDeparture() {
-        if(server.isQueueEmpty()) {
+        if(server.isQueueEmpty(1)) { //TODO: queue id distinction and PQWFQ algorithm
             server.setIsBusy(false);
         } else {
-            double clientArrivalTime = server.handleNextClient();
+            double clientArrivalTime = server.handleNextClient(1);
+            //TODO: '1' is just for debugging purposes. PQWFQ will decide from which queue handle the client
             double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
             addDelayToStatistics(waitingTime);
             scheduleNextDeparture();
         }
     }
 
-    private void scheduleNextArrival() {
+    private void scheduleNextArrival(int queueId) {
         double timeToNextArrival = RandomGenerator.getExpRandom(lambda);
         sumOfArrivalIntervals += timeToNextArrival;
-        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
-        addEvent(new Event(EventType.ARRIVAL, nextArrivalTime));
+        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival; //TODO: change to PQWFQ algorithm
+        addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));
     }
 
     private void scheduleNextDeparture(){
@@ -102,6 +117,7 @@ public class System {
         totalServiceTime += serviceTime;
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
+        //TODO: Fix queueId when event does not belong to any queue
     }
 
     private void addDelayToStatistics(double delay) {
@@ -128,7 +144,6 @@ public class System {
         totalDelay = 0.0;
         queueTime = 0.0;
         serverBusyTime = 0.0;
-        peakQueueSize = 0;
     }
 
     public void displayAllStatistics() {
@@ -154,7 +169,6 @@ public class System {
         java.lang.System.out.println("Total delay: " + totalDelay);
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
-        java.lang.System.out.println("Peak queue size: " + peakQueueSize);
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Rho - average system load\nW - average waiting time");
         java.lang.System.out.println("-----------------------------------------------");
@@ -177,7 +191,7 @@ public class System {
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
-        java.lang.System.out.println("Clients in queue: " + server.getQueueSize());
+        java.lang.System.out.println("Clients in queue: " + server.getQueueSize(1)); //TODO: do it for each
         java.lang.System.out.println("Next event: " + eventList.peekNextEvent().getEventType());
         java.lang.System.out.println("-----------------------------------------------");
     }
