@@ -43,6 +43,18 @@ public abstract class RandomGenerator {
             return MIN_SERVICE_TIME;
     }
 
+    public static double getOnOffRandom(double onDuration, double offDuration, double packetsPerSecond) {
+        double currentTime = Clock.getCurrentTime(); //TODO: static method with get current time?
+        double period = onDuration + offDuration;
+        double difference = currentTime % period;
+
+        if(difference < onDuration) {
+            return currentTime + 1/packetsPerSecond;
+        } else {
+            return currentTime + (period - difference);
+        }
+    }
+
     public static void drawHistogram(ArrayList<Double> numbers) {
         long[] array = new long[11]; //0.0-0.4(9) 0.5-0.(9) ...
         int size = numbers.size();
