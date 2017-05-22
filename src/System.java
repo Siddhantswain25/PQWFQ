@@ -1,3 +1,5 @@
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class System {
@@ -13,16 +15,14 @@ public class System {
     private double queueTime;
     private double serverBusyTime;
 
+    private double spacingTime;
+    private double packetSize;
+
     private EventList eventList;
     private Server server;
 
     System() {
-        lambda = 1.0;
-        mi = 10.0;
-        resetAllStatistics();
-        eventList = new EventList();
-        server = new Server();
-        initialize();
+        this(1.0, 10.0);
     }
 
     System(double lambda, double mi) {
@@ -31,12 +31,13 @@ public class System {
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
+        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1);
         initialize();
     }
 
-    System(Server server) {
-        this.lambda = 1.0;
-        this.mi = 10.0;
+    System(Server server, double lambda, double mi) {
+        this.lambda = lambda;
+        this.mi = mi;
         resetAllStatistics();
         eventList = new EventList();
         this.server = server;
@@ -44,13 +45,9 @@ public class System {
     }
 
     private void initialize() {
-        /*for(int id : server.getSetOfQueueIds()) {
-            scheduleNextArrival(id);
-        }*/
-
-        server.forEachQueue((k,v) -> scheduleNextArrival(k)); //TODO: check if it works!
+        server.forEachQueue((id, queue) -> scheduleNextArrival(id));
     }
-    //TODO: add initial arrival for each queue - will it simulate random start of each event source? Also bad smell.
+    //TODO: does it count as start of all sources in the same time?
 
     private void addEvent(Event event) {
         eventList.addEvent(event);
@@ -71,20 +68,38 @@ public class System {
             processDeparture();
     }
 
+    private int pqwfqAlgorithm() {
+        //TODO: add PQ part
+        return 1;
+    }
+
+    private int wfqAlgorithm(Event event) {
+        int id = event.getQueueId();
+        double vst = server.getQueue(id).getVirtualSpacingTimestamp();
+        double ri = server.getQueue(id).getVirtualSpacingTimestamp();
+        if(event.getEventType() == EventType.ARRIVAL) {
+            double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
+            //TODO: timestamp management
+            //TODO: not always should return queue id
+            return 1;
+        } else {
+            //TODO: get lowest timestamp and handle client
+            return 1;
+        }
+    }
+
     private void updateStatistics(double timeDelta) {
         if(isServerBusy())
             serverBusyTime += timeDelta;
 
-        for(QueuePQWFQ queue : server.getSetOfQueues()) {
-            queueTime += queue.size() * timeDelta;
-        }
+        server.forEachQueue((id, queue) -> queueTime += queue.size() * timeDelta);
     }
 
     private void processArrival(int queueId) {
         numberOfArrivals++;
         scheduleNextArrival(queueId);
         if(server.isBusy()) {
-            server.addClient(queueId, Clock.getCurrentTime()); //TODO: add distincion by queue id
+            server.addClient(queueId, Clock.getCurrentTime());
         }
         else {
             server.setIsBusy(true);
@@ -117,7 +132,6 @@ public class System {
         totalServiceTime += serviceTime;
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
-        //TODO: Fix queueId when event does not belong to any queue
     }
 
     private void addDelayToStatistics(double delay) {
@@ -144,6 +158,7 @@ public class System {
         totalDelay = 0.0;
         queueTime = 0.0;
         serverBusyTime = 0.0;
+        spacingTime = 0.0;
     }
 
     public void displayAllStatistics() {

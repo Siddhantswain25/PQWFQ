@@ -9,6 +9,8 @@ public class QueuePQWFQ {
     private Queue<Double> queue;
     private int priority;
     private double weight;
+    private double virtualSpacingTimestamp; //VSi
+    private double connectionSpeed; //ri
 
     QueuePQWFQ(int priority, double weight) {
         queue = new LinkedList<>();
@@ -26,6 +28,22 @@ public class QueuePQWFQ {
 
     public boolean isEmpty() {
         return queue.isEmpty();
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public double getVirtualSpacingTimestamp() {
+        return virtualSpacingTimestamp;
+    }
+
+    public double getConnectionSpeed() {
+        return connectionSpeed;
     }
 
     public int size() {

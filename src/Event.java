@@ -1,4 +1,6 @@
 public class Event {
+    public static final int SERVER_EVENT = -1;
+
     private int queueId;
     private EventType eventType;
     private double time;
@@ -6,7 +8,7 @@ public class Event {
     public Event(EventType eventType, double time) {
         this.eventType = eventType;
         this.time = time;
-        queueId = -1; //TODO: Probably bad smell
+        queueId = SERVER_EVENT;
     }
 
     public Event(EventType eventType, double time, int queueId) {

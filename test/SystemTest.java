@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SystemTest {
 
-    System system;
+    private System system;
 
     @BeforeEach
     void setUp() {
         Server server = new Server();
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0));
-        system =  new System(server);
+        system =  new System(server, 0.4, 0.5);
 
     }
 
@@ -24,6 +24,14 @@ class SystemTest {
     @Test
     void initialize() {
         assertFalse(system.isEventListEmpty());
+    }
+
+    @Test
+    void processing() {
+        int N = 7000;
+        while(system.getNumberOfArrivals() < N) {
+            system.processNextEvent();
+        }
     }
 
 }

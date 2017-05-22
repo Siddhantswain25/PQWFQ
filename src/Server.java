@@ -1,10 +1,9 @@
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public class Server {
     private boolean isBusy;
-    private HashMap<Integer, QueuePQWFQ> queues; //TODO: change methods to use PQWFQ queues
+    private HashMap<Integer, QueuePQWFQ> queues;
 
     public Server() {
         queues = new HashMap<>();
@@ -16,6 +15,8 @@ public class Server {
 
     public void addQueue(int queueId, QueuePQWFQ queue) {
         queues.put(queueId, queue);
+        //TODO: Should there be only one HIGH_PRIORITY queue and many LOW_PRIORITY?
+        //TODO: Should method check if sum of weights does not exceed 1?
     }
 
     public boolean isBusy() {
@@ -46,16 +47,8 @@ public class Server {
         return queues.size();
     }
 
-    public Collection<Integer> getSetOfQueueIds() {
-        return Collections.unmodifiableMap(queues).keySet();
-    }
-
-    public Collection<QueuePQWFQ> getSetOfQueues() {
-        return Collections.unmodifiableMap(queues).values();
-    }
-
-    public Set<Map.Entry<Integer, QueuePQWFQ>> getQueuesEntrySet() {
-        return Collections.unmodifiableMap(queues).entrySet();
+    public QueuePQWFQ getQueue(int queueId) {
+        return queues.get(queueId);
     }
 
     public void forEachQueue(BiConsumer<Integer, QueuePQWFQ> action) {
