@@ -16,13 +16,7 @@ public abstract class RandomGenerator {
 
     public static double getExpRandom(double mean) { //service times
 
-        Random r = new Random();/*
-        double random;
-        do {
-            random = r.nextDouble();
-        } while (random == 0.0);
-
-        double result = -mean*log(random);*/
+        Random r = new Random();
         double result = Math.log(1-r.nextDouble())/(-mean);
         if(result != 0)
             return result;

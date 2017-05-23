@@ -27,16 +27,25 @@ public class Server {
         this.isBusy = isBusy;
     }
 
-    public void addClient(int queueId, double arrivalTime) {
-        queues.get(queueId).add(arrivalTime);
+    public void addClient(int queueId, Packet packet) {
+        queues.get(queueId).add(packet);
     }
 
-    public double handleNextClient(int queueId) {
+    public Packet handleNextClient(int queueId) {
         return queues.get(queueId).poll();
     }
 
     public boolean isQueueEmpty(int queueId) {
         return queues.get(queueId).isEmpty();
+    }
+
+    public boolean areAllQueuesEmpty() {
+        boolean flag = true;
+        for(QueuePQWFQ queue : queues.values()) {
+            if(!queue.isEmpty())
+                flag = false;
+        }
+        return flag;
     }
 
     public int getQueueSize(int queueId) {
@@ -64,5 +73,18 @@ public class Server {
             }
             action.accept(k, v);
         }
+    }
+
+    public int getIdOfQueueWithTheLowestTimestampOfNextPacket() { //TODO: Refactor at least name
+        double lowestValue = Double.POSITIVE_INFINITY;
+        int id = 0;
+
+        for(Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
+            if(entry.getValue().peekLowestTimestamp() < lowestValue) {
+                lowestValue = entry.getValue().peekLowestTimestamp();
+                id = entry.getKey();
+            }
+        }
+        return id;
     }
 }

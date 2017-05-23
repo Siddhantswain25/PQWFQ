@@ -1,7 +1,3 @@
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
 public class System {
     private double lambda;
     private double mi;
@@ -15,7 +11,7 @@ public class System {
     private double queueTime;
     private double serverBusyTime;
 
-    private double spacingTime;
+    private double spacingTime; //TODO: move to Server class
     private double packetSize;
 
     private EventList eventList;
@@ -28,6 +24,7 @@ public class System {
     System(double lambda, double mi) {
         this.lambda = lambda;
         this.mi = mi;
+        this.packetSize = 5; //TODO: change it
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
@@ -38,6 +35,7 @@ public class System {
     System(Server server, double lambda, double mi) {
         this.lambda = lambda;
         this.mi = mi;
+        this.packetSize = 5; //TODO: change it
         resetAllStatistics();
         eventList = new EventList();
         this.server = server;
@@ -63,7 +61,7 @@ public class System {
         updateStatistics(timeDelta);
 
         if (event.getEventType() == EventType.ARRIVAL)
-            processArrival(event.getQueueId());
+            processArrival(event);
         else
             processDeparture();
     }
@@ -73,33 +71,27 @@ public class System {
         return 1;
     }
 
-    private int wfqAlgorithm(Event event) {
+    private void wfqArrivalAlgorithm(Event event) {
         int id = event.getQueueId();
         double vst = server.getQueue(id).getVirtualSpacingTimestamp();
-        double ri = server.getQueue(id).getVirtualSpacingTimestamp();
-        if(event.getEventType() == EventType.ARRIVAL) {
-            double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
-            //TODO: timestamp management
-            //TODO: not always should return queue id
-            return 1;
-        } else {
-            //TODO: get lowest timestamp and handle client
-            return 1;
-        }
+        double ri = server.getQueue(id).getConnectionSpeed();
+
+        double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
+        server.getQueue(id).setVirtualSpacingTimestamp(timestamp);
+        //server.addClient(id, new Packet(Clock.getCurrentTime(), timestamp));
+        server.addClient(id, new Packet(timestamp)); //TODO: do it like this, or explicitly like above?
     }
 
-    private void updateStatistics(double timeDelta) {
-        if(isServerBusy())
-            serverBusyTime += timeDelta;
-
-        server.forEachQueue((id, queue) -> queueTime += queue.size() * timeDelta);
+    private int wfqDepartureAlgorithm() {
+        return server.getIdOfQueueWithTheLowestTimestampOfNextPacket();
     }
 
-    private void processArrival(int queueId) {
+    private void processArrival(Event event) {
         numberOfArrivals++;
-        scheduleNextArrival(queueId);
+        assert(event.getQueueId() != -1); //TODO: check if this is possible
+        scheduleNextArrival(event.getQueueId());
         if(server.isBusy()) {
-            server.addClient(queueId, Clock.getCurrentTime());
+            wfqArrivalAlgorithm(event);
         }
         else {
             server.setIsBusy(true);
@@ -109,12 +101,15 @@ public class System {
     }
 
     private void processDeparture() {
-        if(server.isQueueEmpty(1)) { //TODO: queue id distinction and PQWFQ algorithm
+        if(server.areAllQueuesEmpty()) {
             server.setIsBusy(false);
         } else {
-            double clientArrivalTime = server.handleNextClient(1);
-            //TODO: '1' is just for debugging purposes. PQWFQ will decide from which queue handle the client
+            int queueId = wfqDepartureAlgorithm(); //TODO: add PQ algorithm
+            Packet handledPacket = server.handleNextClient(queueId);
+
+            double clientArrivalTime = handledPacket.getArrivalTime();
             double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
+
             addDelayToStatistics(waitingTime);
             scheduleNextDeparture();
         }
@@ -123,7 +118,7 @@ public class System {
     private void scheduleNextArrival(int queueId) {
         double timeToNextArrival = RandomGenerator.getExpRandom(lambda);
         sumOfArrivalIntervals += timeToNextArrival;
-        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival; //TODO: change to PQWFQ algorithm
+        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));
     }
 
@@ -132,6 +127,13 @@ public class System {
         totalServiceTime += serviceTime;
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
+    }
+
+    private void updateStatistics(double timeDelta) {
+        if(isServerBusy())
+            serverBusyTime += timeDelta;
+
+        server.forEachQueue((id, queue) -> queueTime += queue.size() * timeDelta);
     }
 
     private void addDelayToStatistics(double delay) {

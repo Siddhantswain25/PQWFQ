@@ -28,9 +28,11 @@ class SystemTest {
 
     @Test
     void processing() {
-        int N = 7000;
+        int N = 700;
+        system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
+            system.displayTrace();
         }
     }
 
