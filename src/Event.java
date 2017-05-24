@@ -1,9 +1,9 @@
 public class Event {
     public static final int SERVER_EVENT = -1;
 
-    private int queueId;
-    private EventType eventType;
-    private double time;
+    private final int queueId;
+    private final EventType eventType;
+    private final double time;
 
     public Event(EventType eventType, double time) {
         this.eventType = eventType;

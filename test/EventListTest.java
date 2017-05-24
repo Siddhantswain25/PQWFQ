@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EventListTest {
 
-    EventList eventList;
+    private EventList eventList;
 
     @BeforeEach
     void setUp() {

@@ -1,7 +1,6 @@
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.LinkedList;
 
 
 public class QueuePQWFQ {
@@ -10,17 +9,14 @@ public class QueuePQWFQ {
 
     private Queue<Packet> queue;
     private int priority;
-    private double weight;
-
+    private double weight; //ri
     private double virtualSpacingTimestamp; //VSi
-    private double connectionSpeed; //ri
 
     QueuePQWFQ(int priority, double weight) {
         queue = new PriorityQueue<>(5, Comparator.comparingDouble(Packet::getVirtualSpacingTimestamp));
         this.priority = priority;
         this.weight = weight;
         virtualSpacingTimestamp = 0.0; //TODO: change it
-        connectionSpeed = 10;
     }
 
     public void add(Packet packet) {
@@ -53,10 +49,6 @@ public class QueuePQWFQ {
 
     public double peekLowestTimestamp() {
         return queue.peek().getVirtualSpacingTimestamp();
-    }
-
-    public double getConnectionSpeed() {
-        return connectionSpeed;
     }
 
     public int size() {

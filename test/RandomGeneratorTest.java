@@ -1,13 +1,11 @@
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
 
 import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RandomGeneratorTest {
@@ -58,28 +56,28 @@ class RandomGeneratorTest {
 
     @Test
     void getOnOffRandom() {
-        double t1 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t1 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(0.1 - t1) < 0.00000001);
         Clock.setTime(t1);
-        double t2 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t2 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(0.2 - t2) < 0.00000001);
         Clock.setTime(t2);
-        double t3 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t3 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(0.3 - t3) < 0.00000001);
         Clock.setTime(t3);
-        double t4 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t4 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(0.4 - t4) < 0.00000001);
         Clock.setTime(t4);
-        double t5 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t5 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(0.5 - t5) < 0.00000001);
         Clock.setTime(t5);
-        double t6 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t6 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(1.5 - t6) < 0.00000001);
         Clock.setTime(t6);
-        double t7 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t7 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(1.6 - t7) < 0.00000001);
         Clock.setTime(t7);
-        double t8 = RandomGenerator.getOnOffRandom(0.5, 1.0, 10);
+        double t8 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
         assertTrue(Math.abs(1.7 - t8) < 0.00000001);
         Clock.setTime(t8);
     }

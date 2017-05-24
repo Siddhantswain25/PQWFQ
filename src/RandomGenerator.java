@@ -2,7 +2,6 @@ import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
 import java.util.Random;
-import static java.lang.StrictMath.log;
 /*
 Random.nextDouble();
 Returns the next pseudorandom, uniformly distributed double value
@@ -24,7 +23,7 @@ public abstract class RandomGenerator {
             return MIN_ARRIVAL_INTERVAL;
     }
 
-    public static double getPoissonRandom(double mean) { //arivals
+    public static double getPoissonRandom(double mean) {
         Random r = new Random();
         double limit = Math.exp(-mean);
         double prod = r.nextDouble();
@@ -37,7 +36,8 @@ public abstract class RandomGenerator {
             return MIN_SERVICE_TIME;
     }
 
-    public static double getOnOffRandom(double onDuration, double offDuration, double packetsPerSecond) {
+    //TODO: add non-deterministic on off source
+    public static double getDeterministicOnOffValue(double onDuration, double offDuration, double packetsPerSecond) {
         double currentTime = Clock.getCurrentTime(); //TODO: static method with get current time?
         double period = onDuration + offDuration;
         double difference = currentTime % period;

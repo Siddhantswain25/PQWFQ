@@ -1,6 +1,6 @@
 public class Packet {
-    private double arrivalTime;
-    private double virtualSpacingTimestamp;
+    private final double arrivalTime;
+    private final double virtualSpacingTimestamp;
 
     public Packet(double virtualSpacingTimestamp) {
         arrivalTime = Clock.getCurrentTime();

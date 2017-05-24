@@ -2,11 +2,16 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Server {
+    private double spacingTime;
+    private double packetSize;
+
     private boolean isBusy;
     private HashMap<Integer, QueuePQWFQ> queues;
 
     public Server() {
         queues = new HashMap<>();
+        this.packetSize = 5; //TODO: change it
+        this.spacingTime = 0.0;
     }
 
     public void addQueue(int queueId, int priority, double weight) {
@@ -19,6 +24,14 @@ public class Server {
         //TODO: Should method check if sum of weights does not exceed 1?
     }
 
+    public double getSpacingTime() {
+        return spacingTime;
+    }
+
+    public void setSpacingTime(double spacingTime) {
+        this.spacingTime = spacingTime;
+    }
+
     public boolean isBusy() {
         return isBusy;
     }
@@ -29,10 +42,6 @@ public class Server {
 
     public void addClient(int queueId, Packet packet) {
         queues.get(queueId).add(packet);
-    }
-
-    public Packet handleNextClient(int queueId) {
-        return queues.get(queueId).poll();
     }
 
     public boolean isQueueEmpty(int queueId) {
@@ -52,14 +61,6 @@ public class Server {
         return queues.get(queueId).size();
     }
 
-    public int getNumberOfQueues() {
-        return queues.size();
-    }
-
-    public QueuePQWFQ getQueue(int queueId) {
-        return queues.get(queueId);
-    }
-
     public void forEachQueue(BiConsumer<Integer, QueuePQWFQ> action) {
         Objects.requireNonNull(action);
         for (Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
@@ -75,16 +76,62 @@ public class Server {
         }
     }
 
-    public int getIdOfQueueWithTheLowestTimestampOfNextPacket() { //TODO: Refactor at least name
+    private int getIdOfQueueWithTheLowestTimestampOfNextPacket() { //TODO: Refactor at least name
         double lowestValue = Double.POSITIVE_INFINITY;
         int id = 0;
 
         for(Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
-            if(entry.getValue().peekLowestTimestamp() < lowestValue) {
+            if(!entry.getValue().isEmpty()
+                    && entry.getValue().getPriority() == QueuePQWFQ.LOW_PRIORITY
+                    && entry.getValue().peekLowestTimestamp() < lowestValue) {
                 lowestValue = entry.getValue().peekLowestTimestamp();
                 id = entry.getKey();
             }
         }
         return id;
+    }
+
+    private boolean hasHighPriorityQueue() {
+        for(Map.Entry<Integer, QueuePQWFQ> q : queues.entrySet()) {
+            if(q.getValue().getPriority() == QueuePQWFQ.HIGH_PRIORITY)
+                return true;
+        }
+        return false;
+    }
+
+    private int getHighPriorityQueueId() throws NoSuchQueueException {
+        for(Map.Entry<Integer, QueuePQWFQ> q : queues.entrySet()) {
+            if(q.getValue().getPriority() == QueuePQWFQ.HIGH_PRIORITY)
+                return q.getKey();
+        }
+        throw new NoSuchQueueException();
+    }
+
+    public int pqwfqDepartureAlgorithm() { //TODO: refactor?
+        if(hasHighPriorityQueue()) {
+            int id;
+            try {
+                id = getHighPriorityQueueId();
+                if(!queues.get(id).isEmpty())
+                    return id;
+            } catch(NoSuchQueueException e) {
+                return getIdOfQueueWithTheLowestTimestampOfNextPacket();
+            }
+        }
+        return getIdOfQueueWithTheLowestTimestampOfNextPacket();
+    }
+
+    public Packet wfqArrivalAlgorithm(Event event) {
+        int id = event.getQueueId();
+        double vst = queues.get(id).getVirtualSpacingTimestamp();
+        double ri = queues.get(id).getWeight();
+
+        double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
+        queues.get(id).setVirtualSpacingTimestamp(timestamp);
+        return new Packet(timestamp);
+    }
+
+    public Packet handleNextClient(int queueId) {
+        return queues.get(queueId).poll();
     }
 }

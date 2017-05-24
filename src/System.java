@@ -11,9 +11,6 @@ public class System {
     private double queueTime;
     private double serverBusyTime;
 
-    private double spacingTime; //TODO: move to Server class
-    private double packetSize;
-
     private EventList eventList;
     private Server server;
 
@@ -24,7 +21,6 @@ public class System {
     System(double lambda, double mi) {
         this.lambda = lambda;
         this.mi = mi;
-        this.packetSize = 5; //TODO: change it
         resetAllStatistics();
         eventList = new EventList();
         server = new Server();
@@ -35,7 +31,6 @@ public class System {
     System(Server server, double lambda, double mi) {
         this.lambda = lambda;
         this.mi = mi;
-        this.packetSize = 5; //TODO: change it
         resetAllStatistics();
         eventList = new EventList();
         this.server = server;
@@ -66,35 +61,16 @@ public class System {
             processDeparture();
     }
 
-    private int pqwfqAlgorithm() {
-        //TODO: add PQ part
-        return 1;
-    }
-
-    private void wfqArrivalAlgorithm(Event event) {
-        int id = event.getQueueId();
-        double vst = server.getQueue(id).getVirtualSpacingTimestamp();
-        double ri = server.getQueue(id).getConnectionSpeed();
-
-        double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
-        server.getQueue(id).setVirtualSpacingTimestamp(timestamp);
-        //server.addClient(id, new Packet(Clock.getCurrentTime(), timestamp));
-        server.addClient(id, new Packet(timestamp)); //TODO: do it like this, or explicitly like above?
-    }
-
-    private int wfqDepartureAlgorithm() {
-        return server.getIdOfQueueWithTheLowestTimestampOfNextPacket();
-    }
-
     private void processArrival(Event event) {
         numberOfArrivals++;
-        assert(event.getQueueId() != -1); //TODO: check if this is possible
         scheduleNextArrival(event.getQueueId());
+        Packet packet = server.wfqArrivalAlgorithm(event);
+
         if(server.isBusy()) {
-            wfqArrivalAlgorithm(event);
-        }
-        else {
+            server.addClient(event.getQueueId(), packet);
+        } else {
             server.setIsBusy(true);
+            server.setSpacingTime(packet.getVirtualSpacingTimestamp());
             addDelayToStatistics(0.0);
             scheduleNextDeparture();
         }
@@ -104,12 +80,13 @@ public class System {
         if(server.areAllQueuesEmpty()) {
             server.setIsBusy(false);
         } else {
-            int queueId = wfqDepartureAlgorithm(); //TODO: add PQ algorithm
+            int queueId = server.pqwfqDepartureAlgorithm();
             Packet handledPacket = server.handleNextClient(queueId);
 
             double clientArrivalTime = handledPacket.getArrivalTime();
             double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
 
+            server.setSpacingTime(handledPacket.getVirtualSpacingTimestamp());
             addDelayToStatistics(waitingTime);
             scheduleNextDeparture();
         }
@@ -141,11 +118,7 @@ public class System {
         numberOfDelays++;
     }
 
-    public boolean isEventListEmpty() {
-        return eventList.isEmpty();
-    }
-
-    public boolean isServerBusy() {
+    private boolean isServerBusy() {
         return server.isBusy();
     }
 
@@ -160,7 +133,6 @@ public class System {
         totalDelay = 0.0;
         queueTime = 0.0;
         serverBusyTime = 0.0;
-        spacingTime = 0.0;
     }
 
     public void displayAllStatistics() {
@@ -208,8 +180,14 @@ public class System {
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
-        java.lang.System.out.println("Clients in queue: " + server.getQueueSize(1)); //TODO: do it for each
+        server.forEachQueue((id, queue) -> {
+            java.lang.System.out.print("Clients in queue " + id + ": " + server.getQueueSize(id));
+            java.lang.System.out.println(" (priority: " + queue.getPriority() + ")");
+            if(!queue.isEmpty())
+                java.lang.System.out.println("Lowest timestamp: " + queue.peekLowestTimestamp());
+        });
         java.lang.System.out.println("Next event: " + eventList.peekNextEvent().getEventType());
+        java.lang.System.out.println("Source number: " + eventList.peekNextEvent().getQueueId());
         java.lang.System.out.println("-----------------------------------------------");
     }
 }
