@@ -1,3 +1,5 @@
+import com.sun.javaws.exceptions.InvalidArgumentException;
+
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -20,15 +22,15 @@ public class Server {
     }
 
     public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes)
-            throws InvalidQueueParametersException {
+            throws IllegalArgumentException {
         addQueue(queueId, new QueuePQWFQ(priority, weight, nominalPacketSizeInBytes));
     }
 
-    public void addQueue(int queueId, QueuePQWFQ queue) throws InvalidQueueParametersException {
+    public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
         if(queue.getPriority() == QueuePQWFQ.HIGH_PRIORITY && hasHighPriorityQueue())
-            throw new InvalidQueueParametersException("Server already has a high priority queue!");
+            throw new IllegalArgumentException("Server already has a high priority queue!");
         else if(queues.containsKey(queueId))
-            throw new InvalidQueueParametersException("Server already has queue with such id!");
+            throw new IllegalArgumentException("Server already has queue with such id!");
         else
             queues.put(queueId, queue);
         //TODO: Should method check if sum of weights does not exceed 1?

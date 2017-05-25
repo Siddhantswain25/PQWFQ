@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ServerTest {
 
     private Server server;
-    private int packetSize;
+    private int packetSizeInBytes = 100;
 
     @BeforeEach
     void setUp() {
@@ -21,37 +21,37 @@ class ServerTest {
     }
 
     @Test
-    void addClient() throws InvalidQueueParametersException {
-        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSize);
-        server.addClient(1, new Packet(0.0, 0.0, packetSize));
+    void addClient() throws IllegalArgumentException {
+        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSizeInBytes);
+        server.addClient(1, new Packet(0.0, 0.0, packetSizeInBytes));
         assertFalse(server.areAllQueuesEmpty());
     }
 
     @Test
     void addQueuesWithTheSameId() {
-        assertThrows(InvalidQueueParametersException.class, () -> {
-            server.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 0.4, packetSize);
-            server.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 0.4, packetSize);
+        assertThrows(IllegalArgumentException.class, () -> {
+            server.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 0.4, packetSizeInBytes);
+            server.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 0.4, packetSizeInBytes);
         });
     }
 
     @Test
     void addTwoHighPriorityQueues() {
-        assertThrows(InvalidQueueParametersException.class, () -> {
-            server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSize);
-            server.addQueue(2, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSize);
+        assertThrows(IllegalArgumentException.class, () -> {
+            server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSizeInBytes);
+            server.addQueue(2, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSizeInBytes);
         });
     }
 
     @Test
-    void handleNextClient() throws InvalidQueueParametersException {
-        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSize);
-        server.addClient(1, new Packet(0.0, 0.0, packetSize));
-        server.addClient(1, new Packet(1.0, 1.0, packetSize));
-        server.addClient(1, new Packet(2.0, 2.0, packetSize));
-        server.addClient(1, new Packet(3.0, 3.0, packetSize));
-        server.addClient(1, new Packet(4.0, 4.0, packetSize));
-        server.addClient(1, new Packet(5.0, 5.0, packetSize));
+    void handleNextClient() throws IllegalArgumentException {
+        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 0.4, packetSizeInBytes);
+        server.addClient(1, new Packet(0.0, 0.0, packetSizeInBytes));
+        server.addClient(1, new Packet(1.0, 1.0, packetSizeInBytes));
+        server.addClient(1, new Packet(2.0, 2.0, packetSizeInBytes));
+        server.addClient(1, new Packet(3.0, 3.0, packetSizeInBytes));
+        server.addClient(1, new Packet(4.0, 4.0, packetSizeInBytes));
+        server.addClient(1, new Packet(5.0, 5.0, packetSizeInBytes));
 
         assertFalse(server.areAllQueuesEmpty());
         for(int i = 0; i < 6; i++) {
@@ -61,15 +61,15 @@ class ServerTest {
     }
 
     @Test
-    void isHighPriorityQueueHandledFirst() throws InvalidQueueParametersException {
-        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1.0, packetSize);
-        server.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 1.0, packetSize);
-        server.addClient(2, new Packet(0.0, 1.0, packetSize));
-        server.addClient(2, new Packet(1.0, 0.0, packetSize));
-        server.addClient(2, new Packet(2.0, 2.0, packetSize));
-        server.addClient(1, new Packet(3.0, 4.0, packetSize));
-        server.addClient(1, new Packet(4.0, 3.0, packetSize));
-        server.addClient(1, new Packet(5.0, 5.0, packetSize));
+    void isHighPriorityQueueHandledFirst() throws IllegalArgumentException {
+        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1.0, packetSizeInBytes);
+        server.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 1.0, packetSizeInBytes);
+        server.addClient(2, new Packet(0.0, 1.0, packetSizeInBytes));
+        server.addClient(2, new Packet(1.0, 0.0, packetSizeInBytes));
+        server.addClient(2, new Packet(2.0, 2.0, packetSizeInBytes));
+        server.addClient(1, new Packet(3.0, 4.0, packetSizeInBytes));
+        server.addClient(1, new Packet(4.0, 3.0, packetSizeInBytes));
+        server.addClient(1, new Packet(5.0, 5.0, packetSizeInBytes));
 
         double[] expectedOrder = new double[] {4.0, 3.0, 5.0, 1.0, 0.0, 2.0};
         for (double anExpectedOrder : expectedOrder) {

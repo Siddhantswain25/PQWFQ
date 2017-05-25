@@ -24,7 +24,7 @@ class SystemTest {
     }
 
     @Test
-    void oneHighPriorityQueue() throws InvalidQueueParametersException {
+    void oneHighPriorityQueue() throws IllegalArgumentException {
         Server server = new Server(serverServiceBitrate);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0, nominalPacketSizeInBytes));
         system =  new System(server, lambda, mi);
@@ -38,7 +38,7 @@ class SystemTest {
     }
 
     @Test
-    void twoLowPriorityQueues() throws InvalidQueueParametersException {
+    void twoLowPriorityQueues() throws IllegalArgumentException {
         Server server = new Server(serverServiceBitrate);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
@@ -53,7 +53,7 @@ class SystemTest {
     }
 
     @Test
-    void oneHighAndTwoLowPriorityQueues() throws InvalidQueueParametersException {
+    void oneHighAndTwoLowPriorityQueues() throws IllegalArgumentException {
         Server server = new Server(serverServiceBitrate);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
