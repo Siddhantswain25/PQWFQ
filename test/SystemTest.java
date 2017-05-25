@@ -1,22 +1,34 @@
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class SystemTest {
 
     private System system;
+    private int N;
+    private double lambda = 0.4;
+    private double mi = 0.5;
+    private int nominalPacketSizeInBytes = 100;
+    private int serverServiceBitrate = 4000; //4kbps = 0.5kBps = 5 packets per second (if packet_size = 100B)
+
+    @BeforeEach
+    void setUp() {
+        N = 700;
+    }
 
     @AfterEach
     void tearDown() {
         system = null;
+        N = 0;
+        Clock.reset();
     }
 
     @Test
-    void oneHighPriorityQueue() {
-        Server server = new Server();
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0));
-        system =  new System(server, 0.4, 0.5);
+    void oneHighPriorityQueue() throws InvalidQueueParametersException {
+        Server server = new Server(serverServiceBitrate);
+        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0, nominalPacketSizeInBytes));
+        system =  new System(server, lambda, mi);
 
-        int N = 70000;
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
@@ -26,14 +38,12 @@ class SystemTest {
     }
 
     @Test
-    void twoLowPriorityQueues() {
-        Server server = new Server();
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5));
+    void twoLowPriorityQueues() throws InvalidQueueParametersException {
+        Server server = new Server(serverServiceBitrate);
+        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
+        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
+        system =  new System(server, lambda, mi);
 
-        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5));
-        system =  new System(server, 0.4, 0.5);
-
-        int N = 7000;
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
@@ -43,14 +53,13 @@ class SystemTest {
     }
 
     @Test
-    void oneHighAndTwoLowPriorityQueues() {
-        Server server = new Server();
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5));
-        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5));
-        server.addQueue(3, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1));
-        system =  new System(server, 0.4, 0.5);
+    void oneHighAndTwoLowPriorityQueues() throws InvalidQueueParametersException {
+        Server server = new Server(serverServiceBitrate);
+        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
+        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
+        server.addQueue(3, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1, nominalPacketSizeInBytes));
+        system =  new System(server, lambda, mi);
 
-        int N = 7000;
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();

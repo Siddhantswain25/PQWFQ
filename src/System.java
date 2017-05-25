@@ -1,6 +1,7 @@
 public class System {
     private double lambda;
     private double mi;
+    //TODO: delete them and move ALL statistics to separate class made only for this purpose
 
     private double totalServiceTime;
     private int numberOfArrivals;
@@ -13,34 +14,29 @@ public class System {
 
     private EventList eventList;
     private Server server;
-
-    System() {
-        this(1.0, 10.0);
-    }
-
-    System(double lambda, double mi) {
-        this.lambda = lambda;
-        this.mi = mi;
-        resetAllStatistics();
-        eventList = new EventList();
-        server = new Server();
-        server.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1);
-        initialize();
-    }
+    private PacketGenerationStrategy strategy;
 
     System(Server server, double lambda, double mi) {
-        this.lambda = lambda;
-        this.mi = mi;
         resetAllStatistics();
         eventList = new EventList();
         this.server = server;
+
+        //TODO: read TODO next to the parameters declaration and remove them from constructor
+        this.lambda = lambda;
+        this.mi = mi;
+
+        setStrategy(new ExponentialPacketGenerationStrategy(1/lambda));
         initialize();
     }
 
     private void initialize() {
         server.forEachQueue((id, queue) -> scheduleNextArrival(id));
+        //TODO: start each source independently
     }
-    //TODO: does it count as start of all sources in the same time?
+
+    public void setStrategy(PacketGenerationStrategy strategy) {
+        this.strategy = strategy;
+    }
 
     private void addEvent(Event event) {
         eventList.addEvent(event);
@@ -72,7 +68,7 @@ public class System {
             server.setIsBusy(true);
             server.setSpacingTime(packet.getVirtualSpacingTimestamp());
             addDelayToStatistics(0.0);
-            scheduleNextDeparture();
+            scheduleNextDeparture(packet.getSize());
         }
     }
 
@@ -88,19 +84,19 @@ public class System {
 
             server.setSpacingTime(handledPacket.getVirtualSpacingTimestamp());
             addDelayToStatistics(waitingTime);
-            scheduleNextDeparture();
+            scheduleNextDeparture(handledPacket.getSize());
         }
     }
 
     private void scheduleNextArrival(int queueId) {
-        double timeToNextArrival = RandomGenerator.getExpRandom(lambda);
+        double timeToNextArrival = strategy.getTimeToNextArrival();
         sumOfArrivalIntervals += timeToNextArrival;
         double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));
     }
 
-    private void scheduleNextDeparture(){
-        double serviceTime = RandomGenerator.getExpRandom(mi);
+    private void scheduleNextDeparture(int packetSizeInBytes){
+        double serviceTime = (packetSizeInBytes*8)/server.getServiceBitrate();
         totalServiceTime += serviceTime;
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
@@ -136,20 +132,26 @@ public class System {
     }
 
     public void displayAllStatistics() {
+        //TODO: move statistics methods to a new class
+
         double totalSimTime = Clock.getCurrentTime();
 
+        //TODO: numberOfQueues = 1 -> display MM1 stats, number > 1, hasPriorityQueue -> display pqwfq stats
         double expectedRho = lambda/mi;
         double expectedW = (expectedRho/mi)/(1-expectedRho);
 
-        double dn = totalDelay/numberOfDelays;
+        double dn = totalDelay/numberOfDelays; //TODO: for each queue
         double qn = queueTime/totalSimTime;
-        double un = serverBusyTime/totalSimTime;
+        double un = serverBusyTime/totalSimTime; //TODO: total load, and for each queue
+        //TODO: avg queue size for each queue
 
         double avgServiceTime = totalServiceTime/numberOfDelays;
         double avgArrivalInterval = sumOfArrivalIntervals/numberOfArrivals;
 
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("------------  SIMULATION RESULTS  -------------");
+        java.lang.System.out.println("-----------------------------------------------");
+        java.lang.System.out.println("-------- WARNING! STATS ARE DEPRECATED --------");
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("lambda:\t" + lambda + "\nmi:\t" + mi);
         java.lang.System.out.println("Total simulation time: " + totalSimTime);
@@ -163,9 +165,9 @@ public class System {
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Expected Rho:\t" + expectedRho);
         java.lang.System.out.println("Expected W:\t\t" + expectedW);
-        java.lang.System.out.println("d(n):\t" + dn + "  (avg waiting time)");
-        java.lang.System.out.println("q(n):\t" + qn + "  (avg queue size)");
-        java.lang.System.out.println("u(n):\t" + un + "   (avg system load)");
+        java.lang.System.out.println("Actual W:\t" + dn + "  (d(n) avg waiting time)");
+        java.lang.System.out.println("Average queue size:\t" + qn + "  (q(n))");
+        java.lang.System.out.println("Actual Rho:\t" + un + "   (u(n) avg system load)");
         java.lang.System.out.println("avgServiceTime:\t\t" + avgServiceTime);
         java.lang.System.out.println("avgArrivalInterval:\t" + avgArrivalInterval);
         java.lang.System.out.println("-----------------------------------------------");

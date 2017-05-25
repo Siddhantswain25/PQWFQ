@@ -10,14 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RandomGeneratorTest {
     private ArrayList<Double> times;
-    private double lambda;
-    private double mi;
+    private double mean;
 
     @BeforeEach
     void setUp() {
         times = new ArrayList<>();
-        lambda = 3;
-        mi = 6;
+        mean = 0.1;
         Clock.reset();
     }
 
@@ -29,28 +27,28 @@ class RandomGeneratorTest {
     @Test
     void getExpRandom() {
         for(int i = 0; i < 1000; i++) {
-            double nextDepartureTime = RandomGenerator.getExpRandom(1/mi);
+            double nextDepartureTime = RandomGenerator.getExpRandom(1/mean);
             times.add(nextDepartureTime);
         }
 
         System.out.println("------  EXP ------");
-        System.out.println("---- mi = " + mi + " ----");
+        System.out.println("---- mi = " + mean + " ----");
         RandomGenerator.printAllNumbers(times);
-        System.out.println("---- mi = " + mi + " ----");
+        System.out.println("---- mi = " + mean + " ----");
         RandomGenerator.drawHistogram(times);
     }
 
     @Test
     void getPoissonRandom() {
         for(int i = 0; i < 10000; i++) {
-            double nextArrivalTime = RandomGenerator.getPoissonRandom(lambda);
+            double nextArrivalTime = RandomGenerator.getPoissonRandom(mean);
             times.add(nextArrivalTime);
         }
 
         System.out.println("----  POISSON ----");
-        System.out.println("-- lambda = " + lambda + " --");
+        System.out.println("-- lambda = " + mean + " --");
         RandomGenerator.printAllNumbers(times);
-        System.out.println("-- lambda = " + lambda + " --");
+        System.out.println("-- lambda = " + mean + " --");
         RandomGenerator.drawHistogram(times);
     }
 

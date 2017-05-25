@@ -3,49 +3,51 @@ import java.util.function.BiConsumer;
 
 public class Server {
     private double spacingTime;
-    private double packetSize;
-
+    private double serviceBitrate; //C[b/s]
     private boolean isBusy;
     private HashMap<Integer, QueuePQWFQ> queues;
 
     public Server() {
         queues = new HashMap<>();
-        this.packetSize = 5; //TODO: change it
         this.spacingTime = 0.0;
+        this.serviceBitrate = 1000.0; //1kbps
     }
 
-    public void addQueue(int queueId, int priority, double weight) {
-        queues.put(queueId, new QueuePQWFQ(priority, weight));
+    public Server(double serviceBitrate) {
+        queues = new HashMap<>();
+        this.spacingTime = 0.0;
+        this.serviceBitrate = serviceBitrate;
     }
 
-    public void addQueue(int queueId, QueuePQWFQ queue) {
-        queues.put(queueId, queue);
-        //TODO: Should there be only one HIGH_PRIORITY queue and many LOW_PRIORITY?
+    public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes)
+            throws InvalidQueueParametersException {
+        addQueue(queueId, new QueuePQWFQ(priority, weight, nominalPacketSizeInBytes));
+    }
+
+    public void addQueue(int queueId, QueuePQWFQ queue) throws InvalidQueueParametersException {
+        if(queue.getPriority() == QueuePQWFQ.HIGH_PRIORITY && hasHighPriorityQueue())
+            throw new InvalidQueueParametersException("Server already has a high priority queue!");
+        else if(queues.containsKey(queueId))
+            throw new InvalidQueueParametersException("Server already has queue with such id!");
+        else
+            queues.put(queueId, queue);
         //TODO: Should method check if sum of weights does not exceed 1?
-    }
-
-    public double getSpacingTime() {
-        return spacingTime;
-    }
-
-    public void setSpacingTime(double spacingTime) {
-        this.spacingTime = spacingTime;
-    }
-
-    public boolean isBusy() {
-        return isBusy;
-    }
-
-    public void setIsBusy(boolean isBusy) {
-        this.isBusy = isBusy;
     }
 
     public void addClient(int queueId, Packet packet) {
         queues.get(queueId).add(packet);
     }
 
-    public boolean isQueueEmpty(int queueId) {
-        return queues.get(queueId).isEmpty();
+    public double getServiceBitrate() {
+        return serviceBitrate;
+    }
+
+    public double getSpacingTime() {
+        return spacingTime;
+    }
+
+    public boolean isBusy() {
+        return isBusy;
     }
 
     public boolean areAllQueuesEmpty() {
@@ -59,36 +61,6 @@ public class Server {
 
     public int getQueueSize(int queueId) {
         return queues.get(queueId).size();
-    }
-
-    public void forEachQueue(BiConsumer<Integer, QueuePQWFQ> action) {
-        Objects.requireNonNull(action);
-        for (Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
-            Integer k;
-            QueuePQWFQ v;
-            try {
-                k = entry.getKey();
-                v = entry.getValue();
-            } catch(IllegalStateException ise) {
-                throw new ConcurrentModificationException(ise); //entry is no longer in the map
-            }
-            action.accept(k, v);
-        }
-    }
-
-    private int getIdOfQueueWithTheLowestTimestampOfNextPacket() { //TODO: Refactor at least name
-        double lowestValue = Double.POSITIVE_INFINITY;
-        int id = 0;
-
-        for(Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
-            if(!entry.getValue().isEmpty()
-                    && entry.getValue().getPriority() == QueuePQWFQ.LOW_PRIORITY
-                    && entry.getValue().peekLowestTimestamp() < lowestValue) {
-                lowestValue = entry.getValue().peekLowestTimestamp();
-                id = entry.getKey();
-            }
-        }
-        return id;
     }
 
     private boolean hasHighPriorityQueue() {
@@ -107,6 +79,29 @@ public class Server {
         throw new NoSuchQueueException();
     }
 
+    public void setSpacingTime(double spacingTime) {
+        this.spacingTime = spacingTime;
+    }
+
+    public void setIsBusy(boolean isBusy) {
+        this.isBusy = isBusy;
+    }
+
+    public void forEachQueue(BiConsumer<Integer, QueuePQWFQ> action) {
+        Objects.requireNonNull(action);
+        for (Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
+            Integer k;
+            QueuePQWFQ v;
+            try {
+                k = entry.getKey();
+                v = entry.getValue();
+            } catch(IllegalStateException ise) {
+                throw new ConcurrentModificationException(ise); //entry is no longer in the map
+            }
+            action.accept(k, v);
+        }
+    }
+
     public int pqwfqDepartureAlgorithm() { //TODO: refactor?
         if(hasHighPriorityQueue()) {
             int id;
@@ -121,14 +116,31 @@ public class Server {
         return getIdOfQueueWithTheLowestTimestampOfNextPacket();
     }
 
+    //TODO: 1.refactor 2.choose random queue if timestamps are the same
+    private int getIdOfQueueWithTheLowestTimestampOfNextPacket() {
+        double lowestValue = Double.POSITIVE_INFINITY;
+        int id = 0;
+
+        for(Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
+            if(!entry.getValue().isEmpty()
+                    && entry.getValue().getPriority() == QueuePQWFQ.LOW_PRIORITY
+                    && entry.getValue().peekLowestTimestamp() < lowestValue) {
+                lowestValue = entry.getValue().peekLowestTimestamp();
+                id = entry.getKey();
+            }
+        }
+        return id;
+    }
+
     public Packet wfqArrivalAlgorithm(Event event) {
         int id = event.getQueueId();
         double vst = queues.get(id).getVirtualSpacingTimestamp();
         double ri = queues.get(id).getWeight();
+        int packetSize = queues.get(id).getNominalPacketSize();
 
         double timestamp = Math.max(spacingTime, vst) + (packetSize/ri);
         queues.get(id).setVirtualSpacingTimestamp(timestamp);
-        return new Packet(timestamp);
+        return new Packet(timestamp, packetSize);
     }
 
     public Packet handleNextClient(int queueId) {
