@@ -5,7 +5,7 @@ public class EventList {
     private PriorityQueue<Event> events;
 
     public EventList() {
-        this.events = new PriorityQueue<Event>(5, Comparator.comparingDouble(Event::getTime));
+        this.events = new PriorityQueue<>(5, Comparator.comparingDouble(Event::getTime));
     }
 
     public void addEvent(Event event) {

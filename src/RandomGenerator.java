@@ -2,7 +2,6 @@ import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
 import java.util.Random;
-import static java.lang.StrictMath.log;
 /*
 Random.nextDouble();
 Returns the next pseudorandom, uniformly distributed double value
@@ -16,13 +15,7 @@ public abstract class RandomGenerator {
 
     public static double getExpRandom(double mean) { //service times
 
-        Random r = new Random();/*
-        double random;
-        do {
-            random = r.nextDouble();
-        } while (random == 0.0);
-
-        double result = -mean*log(random);*/
+        Random r = new Random();
         double result = Math.log(1-r.nextDouble())/(-mean);
         if(result != 0)
             return result;
@@ -30,7 +23,7 @@ public abstract class RandomGenerator {
             return MIN_ARRIVAL_INTERVAL;
     }
 
-    public static double getPoissonRandom(double mean) { //arivals
+    public static double getPoissonRandom(double mean) {
         Random r = new Random();
         double limit = Math.exp(-mean);
         double prod = r.nextDouble();
@@ -41,6 +34,19 @@ public abstract class RandomGenerator {
             return n;
         else
             return MIN_SERVICE_TIME;
+    }
+
+    //TODO: add non-deterministic on off source
+    public static double getDeterministicOnOffValue(double onDuration, double offDuration, double packetsPerSecond) {
+        double currentTime = Clock.getCurrentTime(); //TODO: static method with get current time?
+        double period = onDuration + offDuration;
+        double difference = currentTime % period;
+
+        if(difference < onDuration) {
+            return currentTime + 1/packetsPerSecond;
+        } else {
+            return currentTime + (period - difference);
+        }
     }
 
     public static void drawHistogram(ArrayList<Double> numbers) {

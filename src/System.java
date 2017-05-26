@@ -1,6 +1,7 @@
 public class System {
     private double lambda;
     private double mi;
+    //TODO: delete them and move ALL statistics to separate class made only for this purpose
 
     private double totalServiceTime;
     private int numberOfArrivals;
@@ -11,31 +12,30 @@ public class System {
     private double queueTime;
     private double serverBusyTime;
 
-    private int peakQueueSize;
-
     private EventList eventList;
     private Server server;
+    private PacketGenerationStrategy strategy;
 
-    System() {
-        lambda = 1.0;
-        mi = 10;
+    System(Server server, double lambda, double mi) {
         resetAllStatistics();
         eventList = new EventList();
-        server = new Server();
-        initialize();
-    }
+        this.server = server;
 
-    System(double lambda, double mi) {
+        //TODO: read TODO next to the parameters declaration and remove them from constructor
         this.lambda = lambda;
         this.mi = mi;
-        resetAllStatistics();
-        eventList = new EventList();
-        server = new Server();
+
+        setStrategy(new ExponentialPacketGenerationStrategy(1/lambda));
         initialize();
     }
 
     private void initialize() {
-        scheduleNextArrival();
+        server.forEachQueue((id, queue) -> scheduleNextArrival(id));
+        //TODO: start each source independently
+    }
+
+    public void setStrategy(PacketGenerationStrategy strategy) {
+        this.strategy = strategy;
     }
 
     private void addEvent(Event event) {
@@ -52,56 +52,61 @@ public class System {
         updateStatistics(timeDelta);
 
         if (event.getEventType() == EventType.ARRIVAL)
-            processArrival();
+            processArrival(event);
         else
             processDeparture();
+    }
+
+    private void processArrival(Event event) {
+        numberOfArrivals++;
+        scheduleNextArrival(event.getQueueId());
+        Packet packet = server.wfqArrivalAlgorithm(event);
+
+        if(server.isBusy()) {
+            server.addClient(event.getQueueId(), packet);
+        } else {
+            server.setIsBusy(true);
+            server.setSpacingTime(packet.getVirtualSpacingTimestamp());
+            addDelayToStatistics(0.0);
+            scheduleNextDeparture(packet.getSize());
+        }
+    }
+
+    private void processDeparture() {
+        if(server.areAllQueuesEmpty()) {
+            server.setIsBusy(false);
+        } else {
+            int queueId = server.pqwfqDepartureAlgorithm();
+            Packet handledPacket = server.handleNextClient(queueId);
+
+            double clientArrivalTime = handledPacket.getArrivalTime();
+            double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
+
+            server.setSpacingTime(handledPacket.getVirtualSpacingTimestamp());
+            addDelayToStatistics(waitingTime);
+            scheduleNextDeparture(handledPacket.getSize());
+        }
+    }
+
+    private void scheduleNextArrival(int queueId) {
+        double timeToNextArrival = strategy.getTimeToNextArrival();
+        sumOfArrivalIntervals += timeToNextArrival;
+        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
+        addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));
+    }
+
+    private void scheduleNextDeparture(int packetSizeInBytes){
+        double serviceTime = (packetSizeInBytes*8)/server.getServiceBitrate();
+        totalServiceTime += serviceTime;
+        double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
+        addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
     }
 
     private void updateStatistics(double timeDelta) {
         if(isServerBusy())
             serverBusyTime += timeDelta;
-        queueTime += server.getQueueSize() * timeDelta;
 
-        if (server.getQueueSize() > peakQueueSize)
-            peakQueueSize = server.getQueueSize();
-    }
-
-    private void processArrival() {
-        numberOfArrivals++;
-        scheduleNextArrival();
-        if(server.isBusy()) {
-            server.addClient(Clock.getCurrentTime());
-        }
-        else {
-            server.setIsBusy(true);
-            addDelayToStatistics(0.0);
-            scheduleNextDeparture();
-        }
-    }
-
-    private void processDeparture() {
-        if(server.isQueueEmpty()) {
-            server.setIsBusy(false);
-        } else {
-            double clientArrivalTime = server.handleNextClient();
-            double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
-            addDelayToStatistics(waitingTime);
-            scheduleNextDeparture();
-        }
-    }
-
-    private void scheduleNextArrival() {
-        double timeToNextArrival = RandomGenerator.getExpRandom(lambda);
-        sumOfArrivalIntervals += timeToNextArrival;
-        double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
-        addEvent(new Event(EventType.ARRIVAL, nextArrivalTime));
-    }
-
-    private void scheduleNextDeparture(){
-        double serviceTime = RandomGenerator.getExpRandom(mi);
-        totalServiceTime += serviceTime;
-        double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
-        addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
+        server.forEachQueue((id, queue) -> queueTime += queue.size() * timeDelta);
     }
 
     private void addDelayToStatistics(double delay) {
@@ -109,11 +114,7 @@ public class System {
         numberOfDelays++;
     }
 
-    public boolean isEventListEmpty() {
-        return eventList.isEmpty();
-    }
-
-    public boolean isServerBusy() {
+    private boolean isServerBusy() {
         return server.isBusy();
     }
 
@@ -128,24 +129,29 @@ public class System {
         totalDelay = 0.0;
         queueTime = 0.0;
         serverBusyTime = 0.0;
-        peakQueueSize = 0;
     }
 
     public void displayAllStatistics() {
+        //TODO: move statistics methods to a new class
+
         double totalSimTime = Clock.getCurrentTime();
 
+        //TODO: numberOfQueues = 1 -> display MM1 stats, number > 1, hasPriorityQueue -> display pqwfq stats
         double expectedRho = lambda/mi;
         double expectedW = (expectedRho/mi)/(1-expectedRho);
 
-        double dn = totalDelay/numberOfDelays;
+        double dn = totalDelay/numberOfDelays; //TODO: for each queue
         double qn = queueTime/totalSimTime;
-        double un = serverBusyTime/totalSimTime;
+        double un = serverBusyTime/totalSimTime; //TODO: total load, and for each queue
+        //TODO: avg queue size for each queue
 
         double avgServiceTime = totalServiceTime/numberOfDelays;
         double avgArrivalInterval = sumOfArrivalIntervals/numberOfArrivals;
 
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("------------  SIMULATION RESULTS  -------------");
+        java.lang.System.out.println("-----------------------------------------------");
+        java.lang.System.out.println("-------- WARNING! STATS ARE DEPRECATED --------");
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("lambda:\t" + lambda + "\nmi:\t" + mi);
         java.lang.System.out.println("Total simulation time: " + totalSimTime);
@@ -154,15 +160,14 @@ public class System {
         java.lang.System.out.println("Total delay: " + totalDelay);
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
-        java.lang.System.out.println("Peak queue size: " + peakQueueSize);
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Rho - average system load\nW - average waiting time");
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("Expected Rho:\t" + expectedRho);
         java.lang.System.out.println("Expected W:\t\t" + expectedW);
-        java.lang.System.out.println("d(n):\t" + dn + "  (avg waiting time)");
-        java.lang.System.out.println("q(n):\t" + qn + "  (avg queue size)");
-        java.lang.System.out.println("u(n):\t" + un + "   (avg system load)");
+        java.lang.System.out.println("Actual W:\t" + dn + "  (d(n) avg waiting time)");
+        java.lang.System.out.println("Average queue size:\t" + qn + "  (q(n))");
+        java.lang.System.out.println("Actual Rho:\t" + un + "   (u(n) avg system load)");
         java.lang.System.out.println("avgServiceTime:\t\t" + avgServiceTime);
         java.lang.System.out.println("avgArrivalInterval:\t" + avgArrivalInterval);
         java.lang.System.out.println("-----------------------------------------------");
@@ -177,8 +182,14 @@ public class System {
         java.lang.System.out.println("Q(t): " + queueTime);
         java.lang.System.out.println("B(t): " + serverBusyTime);
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
-        java.lang.System.out.println("Clients in queue: " + server.getQueueSize());
+        server.forEachQueue((id, queue) -> {
+            java.lang.System.out.print("Clients in queue " + id + ": " + server.getQueueSize(id));
+            java.lang.System.out.println(" (priority: " + queue.getPriority() + ")");
+            if(!queue.isEmpty())
+                java.lang.System.out.println("Lowest timestamp: " + queue.peekLowestTimestamp());
+        });
         java.lang.System.out.println("Next event: " + eventList.peekNextEvent().getEventType());
+        java.lang.System.out.println("Source number: " + eventList.peekNextEvent().getQueueId());
         java.lang.System.out.println("-----------------------------------------------");
     }
 }

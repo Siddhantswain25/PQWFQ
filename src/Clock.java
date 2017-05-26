@@ -6,7 +6,7 @@ public class Clock {
 
     private double currentTime;
 
-    public static Clock getInstance() {
+    private static Clock getInstance() {
         if(instance == null)
             instance = new Clock();
         return instance;
@@ -16,6 +16,7 @@ public class Clock {
         getInstance().currentTime = 0.0;
     }
 
+    //0.001 = 1 millisecond TODO: maybe round values somehow?
     public static double getCurrentTime() {
         return getInstance().currentTime;
     }
