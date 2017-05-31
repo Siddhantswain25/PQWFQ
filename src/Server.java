@@ -104,6 +104,10 @@ public class Server {
         }
     }
 
+    public Set<Integer> getSetOfQueueIds() {
+        return queues.keySet();
+    }
+
     public int pqwfqDepartureAlgorithm() { //TODO: refactor?
         if(hasHighPriorityQueue()) {
             int id;

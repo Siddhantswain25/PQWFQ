@@ -6,15 +6,14 @@ import java.util.Random;
 Random.nextDouble();
 Returns the next pseudorandom, uniformly distributed double value
 between 0.0 and 1.0 from this random number generator's sequence.
- */
+*/
 
 public abstract class RandomGenerator {
 
     private final static double MIN_SERVICE_TIME = 0.2;
     private final static double MIN_ARRIVAL_INTERVAL = 0.000001;
 
-    public static double getExpRandom(double mean) { //service times
-
+    public static double getExpRandom(double mean) {
         Random r = new Random();
         double result = Math.log(1-r.nextDouble())/(-mean);
         if(result != 0)

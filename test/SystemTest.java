@@ -27,14 +27,14 @@ class SystemTest {
     void oneHighPriorityQueue() throws IllegalArgumentException {
         Server server = new Server(serverServiceBitrate);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0, nominalPacketSizeInBytes));
-        system =  new System(server, lambda, mi);
+        system =  new System(server, lambda);
 
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.displayAllStatistics();
+        system.getStatistics().displayAllStatistics();
     }
 
     @Test
@@ -42,14 +42,14 @@ class SystemTest {
         Server server = new Server(serverServiceBitrate);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
-        system =  new System(server, lambda, mi);
+        system =  new System(server, lambda);
 
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.displayAllStatistics();
+        system.getStatistics().displayAllStatistics();
     }
 
     @Test
@@ -58,14 +58,14 @@ class SystemTest {
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(3, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1, nominalPacketSizeInBytes));
-        system =  new System(server, lambda, mi);
+        system =  new System(server, lambda);
 
         system.displayTrace();
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.displayAllStatistics();
+        system.getStatistics().displayAllStatistics();
     }
 
 }

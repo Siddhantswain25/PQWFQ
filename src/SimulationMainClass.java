@@ -3,7 +3,6 @@ public class SimulationMainClass {
 
         final int N = 700000;     //number of arrivals
         final double lambda = 0.1;  //arrival intensity
-        final double mi = 10;       //do i even need this?
         final double C = 1000;      //server service bitrate [b/s]
 
         Server server = new Server(C);
@@ -13,12 +12,14 @@ public class SimulationMainClass {
             server.addQueue(3, QueuePQWFQ.LOW_PRIORITY, 0.5, 70);
         } catch (IllegalArgumentException e) { e.printStackTrace(); }
 
-        System system = new System(server, lambda, mi);
+        System system = new System(server, lambda);
         //system.setStrategy(new PoissonPacketGenerationStrategy(lambda)); //if there is a need to change default exp
 
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
         }
-        system.displayAllStatistics();
+
+        Statistics statistics = system.getStatistics();
+        statistics.displayAllStatistics();
     }
 }
