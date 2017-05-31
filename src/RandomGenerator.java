@@ -48,6 +48,11 @@ public abstract class RandomGenerator {
         }
     }
 
+    public static int getRandomIndex(int size) {
+        Random r = new Random();
+        return r.nextInt(size);
+    }
+
     public static void drawHistogram(ArrayList<Double> numbers) {
         long[] array = new long[11]; //0.0-0.4(9) 0.5-0.(9) ...
         int size = numbers.size();

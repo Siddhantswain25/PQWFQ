@@ -8,32 +8,58 @@ public class Server {
     private double serviceBitrate; //C[b/s]
     private boolean isBusy;
     private HashMap<Integer, QueuePQWFQ> queues;
-
-    public Server() {
-        queues = new HashMap<>();
-        this.spacingTime = 0.0;
-        this.serviceBitrate = 1000.0; //1kbps
-    }
+    private HashMap<Integer, PacketGenerationStrategy> strategies;
+    private PacketGenerationStrategy defaultStrategy;
 
     public Server(double serviceBitrate) {
+        this(serviceBitrate, 0.1);
+    }
+
+    public Server(double serviceBitrate, double intensityForExponentialStrategy) {
+        this(serviceBitrate, new ExponentialPacketGenerationStrategy(1/intensityForExponentialStrategy));
+    }
+
+    public Server(double serviceBitrate, PacketGenerationStrategy defaultStrategy) {
         queues = new HashMap<>();
+        strategies = new HashMap<>();
+        this.defaultStrategy = defaultStrategy;
         this.spacingTime = 0.0;
         this.serviceBitrate = serviceBitrate;
     }
 
     public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes)
             throws IllegalArgumentException {
-        addQueue(queueId, new QueuePQWFQ(priority, weight, nominalPacketSizeInBytes));
+        addQueue(queueId, priority, weight, nominalPacketSizeInBytes, defaultStrategy);
     }
 
     public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
+        addQueue(queueId, queue, defaultStrategy);
+    }
+
+    public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes,
+                         PacketGenerationStrategy strategy) throws IllegalArgumentException {
+        addQueue(queueId, new QueuePQWFQ(priority, weight, nominalPacketSizeInBytes), strategy);
+    }
+
+    public void addQueue(int queueId, QueuePQWFQ queue, PacketGenerationStrategy strategy)
+            throws IllegalArgumentException {
         if(queue.getPriority() == QueuePQWFQ.HIGH_PRIORITY && hasHighPriorityQueue())
             throw new IllegalArgumentException("Server already has a high priority queue!");
         else if(queues.containsKey(queueId))
             throw new IllegalArgumentException("Server already has queue with such id!");
-        else
+        else {
             queues.put(queueId, queue);
+            strategies.put(queueId, strategy);
+        }
         //TODO: Should method check if sum of weights does not exceed 1?
+    }
+
+    public void setStrategy(int queueId, PacketGenerationStrategy strategy) {
+        this.strategies.put(queueId, strategy);
+    }
+
+    public PacketGenerationStrategy getStrategy(int queueId) {
+        return strategies.get(queueId);
     }
 
     public void addClient(int queueId, Packet packet) {
@@ -122,20 +148,30 @@ public class Server {
         return getIdOfQueueWithTheLowestTimestampOfNextPacket();
     }
 
-    //TODO: 1.refactor 2.choose random queue if timestamps are the same
     private int getIdOfQueueWithTheLowestTimestampOfNextPacket() {
         double lowestValue = Double.POSITIVE_INFINITY;
-        int id = 0;
+        ArrayList<Integer> id = new ArrayList<>();
 
         for(Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
-            if(!entry.getValue().isEmpty()
-                    && entry.getValue().getPriority() == QueuePQWFQ.LOW_PRIORITY
-                    && entry.getValue().peekLowestTimestamp() < lowestValue) {
-                lowestValue = entry.getValue().peekLowestTimestamp();
-                id = entry.getKey();
+            if(!entry.getValue().isEmpty() && entry.getValue().getPriority() == QueuePQWFQ.LOW_PRIORITY) {
+                double entryLowestTimestamp = entry.getValue().peekLowestTimestamp();
+
+                //TODO: but those are double type values, so comparing them by == is risky
+                if(entryLowestTimestamp <= lowestValue) {
+                    if (entryLowestTimestamp == lowestValue) {
+                        id.add(entry.getKey());
+                    } else {
+                        lowestValue = entryLowestTimestamp;
+                        id.clear();
+                        id.add(entry.getKey());
+                    }
+                }
             }
         }
-        return id;
+        return id.stream()
+                .skip((int)(id.size() * Math.random()))
+                .findFirst()
+                .orElse(1); //TODO: well... find a more elegant way
     }
 
     public Packet wfqArrivalAlgorithm(Event event) {

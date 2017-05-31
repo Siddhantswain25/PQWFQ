@@ -1,24 +1,18 @@
 public class System {
     private EventList eventList;
     private Server server;
-    private PacketGenerationStrategy strategy;
     private Statistics statistics;
 
-    System(Server server, double lambda) {
+    System(Server server) {
         eventList = new EventList();
         this.server = server;
-        setStrategy(new ExponentialPacketGenerationStrategy(1/lambda));
-        statistics = new Statistics(lambda, server.getSetOfQueueIds());
+        statistics = new Statistics(server.getSetOfQueueIds());
         initialize();
     }
 
     private void initialize() {
         server.forEachQueue((id, queue) -> scheduleNextArrival(id));
         //TODO: start each source independently
-    }
-
-    public void setStrategy(PacketGenerationStrategy strategy) {
-        this.strategy = strategy;
     }
 
     private void addEvent(Event event) {
@@ -73,7 +67,7 @@ public class System {
     }
 
     private void scheduleNextArrival(int queueId) {
-        double timeToNextArrival = strategy.getTimeToNextArrival();
+        double timeToNextArrival = server.getStrategy(queueId).getTimeToNextArrival();
         statistics.increaseSumOfArrivalIntervals(timeToNextArrival);
         double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));

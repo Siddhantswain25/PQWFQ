@@ -9,18 +9,16 @@ public class Statistics {
         public double queueTime = 0.0;
     } //TODO: fix encapsulation?
 
-    private double lambda;
     private double totalServiceTime;
     private long numberOfArrivals;
     private double sumOfArrivalIntervals;
     private double serverBusyTime;
     private HashMap<Integer, QueueStatistics> queueStatistics;
 
-    public Statistics(double lambda, Set<Integer> queueIds) {
+    public Statistics(Set<Integer> queueIds) {
         queueStatistics = new HashMap<>();
         queueIds.forEach(id -> queueStatistics.put(id, new QueueStatistics()));
         resetAllStatistics();
-        this.lambda = lambda;
     }
 
     public void resetAllStatistics() {
@@ -112,7 +110,6 @@ public class Statistics {
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("------------  SIMULATION RESULTS  -------------");
         java.lang.System.out.println("-----------------------------------------------");
-        java.lang.System.out.println("lambda:\t" + lambda);
         java.lang.System.out.println("Total simulation time: " + totalSimTime);
         java.lang.System.out.println("Number of arrivals: " + numberOfArrivals);
         java.lang.System.out.println("-----------------------------------------------");

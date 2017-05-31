@@ -8,10 +8,11 @@ class ServerTest {
 
     private Server server;
     private int packetSizeInBytes = 100;
+    private double serviceBitrate = 1000.0;
 
     @BeforeEach
     void setUp() {
-        server = new Server();
+        server = new Server(serviceBitrate);
     }
 
     @AfterEach
