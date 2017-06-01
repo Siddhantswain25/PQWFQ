@@ -17,7 +17,7 @@ class SourceTest {
     void setUp() {
         times = new ArrayList<>();
         mean = 0.1;
-        generator = new Source(0, new ExponentialPacketGenerationStrategy(mean));
+        generator = new Source(0, 70);
         Clock.reset();
     }
 

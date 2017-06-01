@@ -12,31 +12,32 @@ between 0.0 and 1.0 from this random number generator's sequence.
 public class Source {
     private final static double MIN_ARRIVAL_INTERVAL = 0.000001;
 
-    private PacketGenerationStrategy strategy;
     private Random random;
 
     private double startTime;
+    private int packetSizeInBytes;
     private boolean started;
     private int packetsSentInCurrentBurst;
     private double nextOnDuration;
     private double nextOffDuration;
 
-    public Source(double startTime, PacketGenerationStrategy strategy) {
+    public Source(double startTime, int packetSizeInBytes) {
         random = new Random();
         this.startTime = startTime;
-        this.strategy = strategy;
+        this.packetSizeInBytes = packetSizeInBytes;
+
         started = false;
         packetsSentInCurrentBurst = 0;
         nextOnDuration = 0;
         nextOffDuration = 0;
     }
 
-    public void setStrategy(PacketGenerationStrategy strategy) {
-        this.strategy = strategy;
+    public int getPacketSizeInBytes() {
+        return packetSizeInBytes;
     }
 
-    public PacketGenerationStrategy getStrategy() {
-        return strategy;
+    public void setPacketSizeInBytes(int packetSizeInBytes) {
+        this.packetSizeInBytes = packetSizeInBytes;
     }
 
     public double getNextExp(double lambda) {
@@ -151,6 +152,4 @@ public class Source {
             System.out.println(d);
         System.out.println("------------ END ------------");
     }
-
-
 }

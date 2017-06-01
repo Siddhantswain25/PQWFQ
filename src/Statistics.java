@@ -15,10 +15,13 @@ public class Statistics {
     private double serverBusyTime;
     private HashMap<Integer, QueueStatistics> queueStatistics;
 
-    public Statistics(Set<Integer> queueIds) {
+    public Statistics() {
         queueStatistics = new HashMap<>();
-        queueIds.forEach(id -> queueStatistics.put(id, new QueueStatistics()));
         resetAllStatistics();
+    }
+
+    public void registerQueue(int queueId) {
+        queueStatistics.put(queueId, new QueueStatistics());
     }
 
     public void resetAllStatistics() {
@@ -85,7 +88,7 @@ public class Statistics {
         this.serverBusyTime += serverBusyTime;
     }
 
-    public void forEachQueueStatistic(BiConsumer<Integer, QueueStatistics> action) {
+    private void forEachQueueStatistic(BiConsumer<Integer, QueueStatistics> action) {
         queueStatistics.forEach(action);
     }
 

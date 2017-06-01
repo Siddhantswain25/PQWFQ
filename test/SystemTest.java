@@ -2,6 +2,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+//TODO: write tests
 class SystemTest {
 
     private System system;
@@ -22,7 +23,7 @@ class SystemTest {
         N = 0;
         Clock.reset();
     }
-
+/*
     @Test
     void oneHighPriorityQueue() throws IllegalArgumentException {
         Server server = new Server(serverServiceBitrate, lambda);
@@ -67,5 +68,5 @@ class SystemTest {
         }
         system.getStatistics().displayAllStatistics();
     }
-
+*/
 }

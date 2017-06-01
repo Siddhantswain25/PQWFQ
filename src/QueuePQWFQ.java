@@ -11,14 +11,12 @@ public class QueuePQWFQ {
     private int priority;
     private double weight; //ri
     private double virtualSpacingTimestamp; //VSi
-    private int nominalPacketSize; //[B] each queue can have different packet sizes
 
-    QueuePQWFQ(int priority, double weight, int nominalPacketSizeInBytes) {
+    QueuePQWFQ(int priority, double weight) {
         queue = new PriorityQueue<>(5, Comparator.comparingDouble(Packet::getVirtualSpacingTimestamp));
         this.priority = priority;
         this.weight = weight;
         this.virtualSpacingTimestamp = 0.0;
-        this.nominalPacketSize = nominalPacketSizeInBytes;
     }
 
     public void add(Packet packet) {
@@ -47,14 +45,6 @@ public class QueuePQWFQ {
 
     public void setVirtualSpacingTimestamp(double virtualSpacingTimestamp) {
         this.virtualSpacingTimestamp = virtualSpacingTimestamp;
-    }
-
-    public int getNominalPacketSize() {
-        return nominalPacketSize;
-    }
-
-    public void setNominalPacketSize(int nominalPacketSize) {
-        this.nominalPacketSize = nominalPacketSize;
     }
 
     public double peekLowestTimestamp() {
