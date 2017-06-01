@@ -8,7 +8,8 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class RandomGeneratorTest {
+class SourceTest {
+    private Source generator;
     private ArrayList<Double> times;
     private double mean;
 
@@ -16,6 +17,7 @@ class RandomGeneratorTest {
     void setUp() {
         times = new ArrayList<>();
         mean = 0.1;
+        generator = new Source(0, new ExponentialPacketGenerationStrategy(mean));
         Clock.reset();
     }
 
@@ -26,59 +28,64 @@ class RandomGeneratorTest {
 
     @Test
     void getExpRandom() {
+        double actualMean = 0;
         for(int i = 0; i < 1000; i++) {
-            double nextDepartureTime = RandomGenerator.getExpRandom(1/mean);
-            times.add(nextDepartureTime);
+            double value = generator.getNextExp(1/mean);
+            times.add(value);
+            actualMean += value;
         }
+
+        actualMean = actualMean/times.size();
 
         System.out.println("------  EXP ------");
         System.out.println("---- mi = " + mean + " ----");
-        RandomGenerator.printAllNumbers(times);
-        System.out.println("---- mi = " + mean + " ----");
-        RandomGenerator.drawHistogram(times);
+        generator.printAllNumbers(times);
+        System.out.println("mi = " + mean);
+        System.out.println("actual mean = " + actualMean);
+        generator.drawHistogram(times);
     }
 
     @Test
     void getPoissonRandom() {
         for(int i = 0; i < 10000; i++) {
-            double nextArrivalTime = RandomGenerator.getPoissonRandom(mean);
+            double nextArrivalTime = generator.getNextPoisson(mean);
             times.add(nextArrivalTime);
         }
 
         System.out.println("----  POISSON ----");
         System.out.println("-- lambda = " + mean + " --");
-        RandomGenerator.printAllNumbers(times);
+        generator.printAllNumbers(times);
         System.out.println("-- lambda = " + mean + " --");
-        RandomGenerator.drawHistogram(times);
+        generator.drawHistogram(times);
     }
-
+/*
     @Test
     void getOnOffRandom() {
-        double t1 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t1 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(0.1 - t1) < 0.00000001);
         Clock.setTime(t1);
-        double t2 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t2 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(0.2 - t2) < 0.00000001);
         Clock.setTime(t2);
-        double t3 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t3 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(0.3 - t3) < 0.00000001);
         Clock.setTime(t3);
-        double t4 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t4 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(0.4 - t4) < 0.00000001);
         Clock.setTime(t4);
-        double t5 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t5 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(0.5 - t5) < 0.00000001);
         Clock.setTime(t5);
-        double t6 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t6 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(1.5 - t6) < 0.00000001);
         Clock.setTime(t6);
-        double t7 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t7 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(1.6 - t7) < 0.00000001);
         Clock.setTime(t7);
-        double t8 = RandomGenerator.getDeterministicOnOffValue(0.5, 1.0, 10);
+        double t8 = generator.getNextOnOffDeterministic(0.5, 1.0, 10);
         assertTrue(Math.abs(1.7 - t8) < 0.00000001);
         Clock.setTime(t8);
     }
-
+*/
 
 }

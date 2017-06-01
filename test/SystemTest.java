@@ -25,7 +25,7 @@ class SystemTest {
 
     @Test
     void oneHighPriorityQueue() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
+        Server server = new Server(serverServiceBitrate, lambda);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0, nominalPacketSizeInBytes));
         system =  new System(server);
 
@@ -39,7 +39,7 @@ class SystemTest {
 
     @Test
     void twoLowPriorityQueues() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
+        Server server = new Server(serverServiceBitrate, lambda);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         system =  new System(server);
@@ -54,7 +54,7 @@ class SystemTest {
 
     @Test
     void oneHighAndTwoLowPriorityQueues() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
+        Server server = new Server(serverServiceBitrate, lambda);
         server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
         server.addQueue(3, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1, nominalPacketSizeInBytes));

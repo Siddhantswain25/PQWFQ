@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Random;
+
 public class System {
     private EventList eventList;
     private Server server;
@@ -67,7 +70,7 @@ public class System {
     }
 
     private void scheduleNextArrival(int queueId) {
-        double timeToNextArrival = server.getStrategy(queueId).getTimeToNextArrival();
+        double timeToNextArrival = server.getNextArrivalTime(queueId);
         statistics.increaseSumOfArrivalIntervals(timeToNextArrival);
         double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, queueId));

@@ -6,7 +6,7 @@ public class PoissonPacketGenerationStrategy implements PacketGenerationStrategy
     }
 
     @Override
-    public double getTimeToNextArrival() {
-        return RandomGenerator.getPoissonRandom(mean);
+    public double getTimeToNextArrival(Source generator) {
+        return generator.getNextPoisson(mean);
     }
 }

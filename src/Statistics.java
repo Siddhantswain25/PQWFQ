@@ -110,22 +110,21 @@ public class Statistics {
         java.lang.System.out.println("-----------------------------------------------");
         java.lang.System.out.println("------------  SIMULATION RESULTS  -------------");
         java.lang.System.out.println("-----------------------------------------------");
-        java.lang.System.out.println("Total simulation time: " + totalSimTime);
+        java.lang.System.out.println("Total simulation time: " + String.format("%.5f", totalSimTime));
         java.lang.System.out.println("Number of arrivals: " + numberOfArrivals);
         java.lang.System.out.println("-----------------------------------------------");
         forEachQueueStatistic((id, qs) -> {
             java.lang.System.out.println("QUEUE " + id);
             java.lang.System.out.println("Number of delays/serviced customers: " + qs.numberOfDelays);
-            java.lang.System.out.println("Total delay: " + qs.totalDelay);
-            java.lang.System.out.println("Q(t): " + qs.queueTime);
-            java.lang.System.out.println("Average waiting time:\t" + dn.get(id));
-            java.lang.System.out.println("Average queue size:\t" + qn.get(id));
+            java.lang.System.out.println("Total delay: " + String.format("%.3f", qs.totalDelay));
+            java.lang.System.out.println("Q(t): " + String.format("%.3f", qs.queueTime));
+            java.lang.System.out.println("Average waiting time:\t" + String.format("%.3f", dn.get(id)));
+            java.lang.System.out.println("Average queue size:\t" + String.format("%.3f", qn.get(id)));
             java.lang.System.out.println("-----------------------------------------------");
         });
-        java.lang.System.out.println("B(t): " + serverBusyTime);
-        java.lang.System.out.println("-----------------------------------------------");
-        java.lang.System.out.println("Average load:\t" + un);
-        java.lang.System.out.println("avgArrivalInterval:\t" + avgArrivalInterval);
+        java.lang.System.out.println("B(t): " + String.format("%.3f", serverBusyTime));
+        java.lang.System.out.println("Average load: " + String.format("%.3f", un));
+        java.lang.System.out.println("Average arrival interval: " + String.format("%.3f", avgArrivalInterval));
         java.lang.System.out.println("-----------------------------------------------");
     }
 }

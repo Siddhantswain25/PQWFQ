@@ -1,3 +1,3 @@
 public interface PacketGenerationStrategy {
-    double getTimeToNextArrival();
+    double getTimeToNextArrival(Source generator);
 }

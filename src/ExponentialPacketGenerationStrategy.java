@@ -1,12 +1,12 @@
 public class ExponentialPacketGenerationStrategy implements PacketGenerationStrategy {
-    private double mean;
+    private double lambda;
 
-    public ExponentialPacketGenerationStrategy(double mean) {
-        this.mean = mean;
+    public ExponentialPacketGenerationStrategy(double lambda) {
+        this.lambda = lambda;
     }
 
     @Override
-    public double getTimeToNextArrival() {
-        return RandomGenerator.getExpRandom(mean);
+    public double getTimeToNextArrival(Source generator) {
+        return generator.getNextExp(lambda);
     }
 }

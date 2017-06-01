@@ -8,20 +8,16 @@ public class Server {
     private double serviceBitrate; //C[b/s]
     private boolean isBusy;
     private HashMap<Integer, QueuePQWFQ> queues;
-    private HashMap<Integer, PacketGenerationStrategy> strategies;
+    private HashMap<Integer, Source> sources;
     private PacketGenerationStrategy defaultStrategy;
 
-    public Server(double serviceBitrate) {
-        this(serviceBitrate, 0.1);
-    }
-
-    public Server(double serviceBitrate, double intensityForExponentialStrategy) {
-        this(serviceBitrate, new ExponentialPacketGenerationStrategy(1/intensityForExponentialStrategy));
+    public Server(double serviceBitrate, double intensityForDefaultExponentialStrategy) {
+        this(serviceBitrate, new ExponentialPacketGenerationStrategy(intensityForDefaultExponentialStrategy));
     }
 
     public Server(double serviceBitrate, PacketGenerationStrategy defaultStrategy) {
         queues = new HashMap<>();
-        strategies = new HashMap<>();
+        sources = new HashMap<>();
         this.defaultStrategy = defaultStrategy;
         this.spacingTime = 0.0;
         this.serviceBitrate = serviceBitrate;
@@ -32,13 +28,19 @@ public class Server {
         addQueue(queueId, priority, weight, nominalPacketSizeInBytes, defaultStrategy);
     }
 
-    public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
-        addQueue(queueId, queue, defaultStrategy);
+    public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes,
+                         double generationIntensity) throws IllegalArgumentException {
+        PacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(generationIntensity);
+        addQueue(queueId, priority, weight, nominalPacketSizeInBytes, strategy);
     }
 
     public void addQueue(int queueId, int priority, double weight, int nominalPacketSizeInBytes,
                          PacketGenerationStrategy strategy) throws IllegalArgumentException {
         addQueue(queueId, new QueuePQWFQ(priority, weight, nominalPacketSizeInBytes), strategy);
+    }
+
+    public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
+        addQueue(queueId, queue, defaultStrategy);
     }
 
     public void addQueue(int queueId, QueuePQWFQ queue, PacketGenerationStrategy strategy)
@@ -49,17 +51,18 @@ public class Server {
             throw new IllegalArgumentException("Server already has queue with such id!");
         else {
             queues.put(queueId, queue);
-            strategies.put(queueId, strategy);
+            sources.put(queueId, new Source(0, strategy)); //TODO: add start time?
         }
         //TODO: Should method check if sum of weights does not exceed 1?
     }
 
-    public void setStrategy(int queueId, PacketGenerationStrategy strategy) {
-        this.strategies.put(queueId, strategy);
+    public void setStrategy(int sourceId, PacketGenerationStrategy strategy) {
+        sources.get(sourceId).setStrategy(strategy);
     }
 
-    public PacketGenerationStrategy getStrategy(int queueId) {
-        return strategies.get(queueId);
+    public double getNextArrivalTime(int sourceId) {
+        Source s = sources.get(sourceId);
+        return s.getStrategy().getTimeToNextArrival(s); //TODO: FIX IT!
     }
 
     public void addClient(int queueId, Packet packet) {

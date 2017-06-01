@@ -9,10 +9,11 @@ class ServerTest {
     private Server server;
     private int packetSizeInBytes = 100;
     private double serviceBitrate = 1000.0;
+    private PacketGenerationStrategy defaultPGS = new ExponentialPacketGenerationStrategy(1);
 
     @BeforeEach
     void setUp() {
-        server = new Server(serviceBitrate);
+        server = new Server(serviceBitrate, defaultPGS);
     }
 
     @AfterEach
