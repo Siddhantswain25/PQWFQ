@@ -123,6 +123,7 @@ public class Statistics {
             java.lang.System.out.println("Q(t): " + String.format("%.3f", qs.queueTime));
             java.lang.System.out.println("Average waiting time:\t" + String.format("%.3f", dn.get(id)));
             java.lang.System.out.println("Average queue size:\t" + String.format("%.3f", qn.get(id)));
+            java.lang.System.out.println("Rho (load): ");
             java.lang.System.out.println("-----------------------------------------------");
         });
         java.lang.System.out.println("B(t): " + String.format("%.3f", serverBusyTime));

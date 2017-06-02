@@ -6,7 +6,6 @@ public class System {
     private Server server;
     private HashMap<Integer, QueuePQWFQ> queues;
     private HashMap<Integer, Source> sources;
-    private HashMap<Integer, PacketGenerationStrategy> strategies;
     private PacketGenerationStrategy defaultStrategy;
     private Statistics statistics;
 
@@ -14,7 +13,7 @@ public class System {
         eventList = new EventList();
         queues = new HashMap<>();
         sources = new HashMap<>();
-        strategies = new HashMap<>();
+        defaultStrategy = new ExponentialPacketGenerationStrategy(1);
         this.server = server;
         statistics = new Statistics();
     }
@@ -36,18 +35,12 @@ public class System {
     }
 
     public void addSource(int sourceId, double startTime, int packetSizeInBytes) {
-        sources.put(sourceId, new Source(startTime, packetSizeInBytes));
-        strategies.put(sourceId, defaultStrategy);
+        sources.put(sourceId, new Source(startTime, packetSizeInBytes, defaultStrategy));
     } //TODO: throw exceptions
 
     public void addSource(int sourceId, double startTime, int packetSizeInBytes, PacketGenerationStrategy strategy) {
-        sources.put(sourceId, new Source(startTime, packetSizeInBytes));
-        strategies.put(sourceId, strategy);
+        sources.put(sourceId, new Source(startTime, packetSizeInBytes, strategy));
         scheduleNextArrival(sourceId);
-    }
-
-    public void setStrategy(int sourceId, PacketGenerationStrategy strategy) {
-        strategies.put(sourceId, strategy);
     }
 
     private void addEvent(Event event) {
@@ -106,7 +99,7 @@ public class System {
     }
 
     private void scheduleNextArrival(int id) {
-        double timeToNextArrival = strategies.get(id).getTimeToNextArrival(sources.get(id));
+        double timeToNextArrival = sources.get(id).getNextArrival();
         statistics.increaseSumOfArrivalIntervals(timeToNextArrival);
         double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, id));
@@ -117,25 +110,6 @@ public class System {
         statistics.increaseTotalServiceTime(serviceTime);
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
-    }
-
-    private void forEachQueue(BiConsumer<Integer, QueuePQWFQ> action) {
-        Objects.requireNonNull(action);
-        for (Map.Entry<Integer, QueuePQWFQ> entry : queues.entrySet()) {
-            Integer k;
-            QueuePQWFQ v;
-            try {
-                k = entry.getKey();
-                v = entry.getValue();
-            } catch(IllegalStateException ise) {
-                throw new ConcurrentModificationException(ise); //entry is no longer in the map
-            }
-            action.accept(k, v);
-        }
-    }
-
-    private Set<Integer> getSetOfQueueIds() {
-        return queues.keySet();
     }
 
     private int pqwfqDepartureAlgorithm() {
@@ -226,7 +200,7 @@ public class System {
         if(isServerBusy())
             statistics.increaseServerBusyTime(timeDelta);
 
-        forEachQueue((id, queue) -> statistics.increaseQueueTime(id,queue.size() * timeDelta));
+        queues.forEach((id, queue) -> statistics.increaseQueueTime(id,queue.size() * timeDelta));
     }
 
     private void addDelayToStatistics(int queueId, double delay) {
@@ -252,7 +226,7 @@ public class System {
         java.lang.System.out.println("Current time: " + simTime);
         java.lang.System.out.println("B(t): " + statistics.getServerBusyTime());
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
-        forEachQueue((id, queue) -> {
+        queues.forEach((id, queue) -> {
             java.lang.System.out.println("-----------------------------------------------");
             java.lang.System.out.println("QUEUE " + id);
             Statistics.QueueStatistics stats = statistics.getQueueStatistics(id);

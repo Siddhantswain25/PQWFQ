@@ -7,6 +7,17 @@ public class ExponentialPacketGenerationStrategy implements PacketGenerationStra
 
     @Override
     public double getTimeToNextArrival(Source generator) {
-        return generator.getNextExp(lambda);
+        if(generator.isRunning()) {
+            double result = generator.getExpRandom(1/lambda);
+            if (result != 0)
+                return result;
+            else
+                return Source.MIN_ARRIVAL_INTERVAL;
+        } else {
+            generator.setRunning(true);
+            if(generator.getStartTime() == 0)
+                return getTimeToNextArrival(generator);
+            return generator.getStartTime();
+        }
     }
 }

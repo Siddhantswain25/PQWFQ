@@ -10,26 +10,21 @@ between 0.0 and 1.0 from this random number generator's sequence.
 
 //TODO: test class
 public class Source {
-    private final static double MIN_ARRIVAL_INTERVAL = 0.000001;
+    public final static double MIN_ARRIVAL_INTERVAL = 0.000001;
 
     private Random random;
+    private PacketGenerationStrategy strategy;
 
     private double startTime;
     private int packetSizeInBytes;
-    private boolean started;
-    private int packetsSentInCurrentBurst;
-    private double nextOnDuration;
-    private double nextOffDuration;
+    private boolean isRunning;
 
-    public Source(double startTime, int packetSizeInBytes) {
+    public Source(double startTime, int packetSizeInBytes, PacketGenerationStrategy strategy) {
         random = new Random();
+        this.strategy = strategy;
         this.startTime = startTime;
         this.packetSizeInBytes = packetSizeInBytes;
-
-        started = false;
-        packetsSentInCurrentBurst = 0;
-        nextOnDuration = 0;
-        nextOffDuration = 0;
+        isRunning = false;
     }
 
     public int getPacketSizeInBytes() {
@@ -40,84 +35,33 @@ public class Source {
         this.packetSizeInBytes = packetSizeInBytes;
     }
 
-    public double getNextExp(double lambda) {
-        if(started || startTime == 0) {
-            double result = getExpRandom(1/lambda);
-            if (result != 0)
-                return result;
-            else
-                return MIN_ARRIVAL_INTERVAL;
-        } else {
-            started = true;
-            return startTime;
-        }
+    public double getNextArrival() {
+        return strategy.getTimeToNextArrival(this);
     }
 
-    public double getNextPoisson(double mean) {
-        if(started || startTime == 0) {
-            double n = getPoissonRandom(mean);
-            return n != 0 ? n : MIN_ARRIVAL_INTERVAL;
-        } else {
-            started = true;
-            return startTime;
-        }
-    }
-
-    //TODO: test
-    public double getNextOnOffExp(double onDuration, double offDuration, int burstRateInBps, int packetSizeInBytes) {
-        double currentTime = Clock.getCurrentTime();
-
-        if(!started && currentTime >= startTime) {
-            started = true;
-            nextOnDuration = getExpRandom(nextOnDuration);
-            nextOffDuration = getNextExp(nextOffDuration);
-        }
-        double interval = (packetSizeInBytes*8)/burstRateInBps;
-        double burstLength = nextOnDuration/interval; //in packets
-
-        if(started && packetsSentInCurrentBurst < burstLength) {
-            packetsSentInCurrentBurst++;
-            return getExpRandom(interval);
-        } else {
-            packetsSentInCurrentBurst = 0;
-            nextOnDuration = getExpRandom(onDuration);
-            return getExpRandom(offDuration);
-        }
-
-    }
-
-    //TODO: test
-    public double getNextOnOffDeterministic(double onDuration, double offDuration, double burstRateInBps,
-                                            int packetSizeInBytes) {
-        double currentTime = Clock.getCurrentTime();
-        double period = onDuration + offDuration;
-        double difference = currentTime % period;
-        double interval = (packetSizeInBytes*8)/burstRateInBps;
-        double burstLength = onDuration/interval; //in packets
-
-        if(!started && currentTime >= startTime)
-            started = true;
-
-        if(started && packetsSentInCurrentBurst < burstLength) {
-            packetsSentInCurrentBurst++;
-            return interval;
-        } else {
-            packetsSentInCurrentBurst = 0;
-            return period - difference; //next event will appear at the beginning of next ON period
-        }
-    }
-
-    private double getExpRandom(double mean) {
+    public double getExpRandom(double mean) {
         return Math.log(1 - random.nextDouble()) / (-mean);
     }
 
-    private double getPoissonRandom(double mean) {
+    public double getPoissonRandom(double mean) {
         double limit = Math.exp(-mean);
         double prod = random.nextDouble();
         int n;
         for (n = 0; prod >= limit; n++)
             prod *= random.nextDouble();
         return n;
+    }
+
+    public double getStartTime() {
+        return startTime;
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void setRunning(boolean isRunning) {
+        this.isRunning = isRunning;
     }
 
     //for debugging purposes
