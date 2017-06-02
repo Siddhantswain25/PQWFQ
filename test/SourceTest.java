@@ -16,8 +16,8 @@ class SourceTest {
     @BeforeEach
     void setUp() {
         times = new ArrayList<>();
-        N = 10000;
-        generator = new Source(0, 70, null);
+        N = 100000;
+        generator = new Source(0, 100, null);
         Clock.reset();
     }
 
@@ -58,7 +58,7 @@ class SourceTest {
         generator.setStrategy(new ExponentialPacketGenerationStrategy(1/expectedMean));
         double actualMean = 0;
         for(int i = 0; i < N; i++) {
-            double value = generator.getNextArrival();
+            double value = generator.getTimeToNextArrival();
             times.add(value);
             actualMean += value;
         }
@@ -75,7 +75,7 @@ class SourceTest {
         double actualMean = 0;
         generator.setStrategy(new PoissonPacketGenerationStrategy(expectedMean));
         for(int i = 0; i < N; i++) {
-            double value = generator.getNextArrival();
+            double value = generator.getTimeToNextArrival();
             times.add(value);
             actualMean += value;
         }
@@ -86,5 +86,34 @@ class SourceTest {
         System.out.println("-- expectedMean = " + expectedMean + " --");
         System.out.println("-- actualMean = " + actualMean + " --");
         generator.drawHistogram(times);
+    }
+
+    @Test
+    void getOnOffExpArrival() {
+        PacketGenerationStrategy strategy = new OnOffExpPacketGenerationStrategy(0.5, 0.5, 1000);
+        generator.setStrategy(strategy);
+        for(int i = 0; i < N; i++) {
+            double value = generator.getTimeToNextArrival();
+            times.add(value);
+            Clock.increaseTime(value);
+        }
+        System.out.println("----  ON/OFF EXP ----");
+        for(double t : times)
+            System.out.println(t);
+        System.out.println("----  ON/OFF EXP ----");
+    }
+
+    @Test
+    void getOnOffDeterministicArrival() {
+        generator.setStrategy(new OnOffDeterministicPacketGenerationStrategy(0.5, 0.5, 1000));
+        for(int i = 0; i < N; i++) {
+            double value = generator.getTimeToNextArrival();
+            times.add(value);
+            Clock.increaseTime(value);
+        }
+        System.out.println("----  ON/OFF DETERMINISTIC ----");
+        for(double t : times)
+            System.out.println(t);
+        System.out.println("----  ON/OFF DETERMINISTIC ----");
     }
 }

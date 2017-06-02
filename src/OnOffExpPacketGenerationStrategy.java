@@ -1,18 +1,20 @@
+import java.lang.*;
+
 public class OnOffExpPacketGenerationStrategy implements PacketGenerationStrategy {
     private double onDuration;
     private double offDuration;
-    private int burstRateInBps;
-    private int packetSizeInBytes;
-    private int packetsSentInCurrentBurst;
-    private double nextOnDuration;
-    private double nextOffDuration;
+    private double burstRateInBps;
+    private double intervalBetweenPackets;
+    private double startOfNextBurst;
+    private double startOfNextIdle;
+    private double totalIdleDuration; //TODO: clear it from debugging methods
+    private double totalBurstDuration;
+    private int totalPeriods;
 
-    public OnOffExpPacketGenerationStrategy(double onDuration, double offDuration, int burstRateInBps,
-                                            int packetSizeInBytes) {
+    public OnOffExpPacketGenerationStrategy(double onDuration, double offDuration, int burstRateInBps) {
         this.onDuration = onDuration;
         this.offDuration = offDuration;
         this.burstRateInBps = burstRateInBps;
-        this.packetSizeInBytes = packetSizeInBytes;
     }
 
     @Override
@@ -21,21 +23,26 @@ public class OnOffExpPacketGenerationStrategy implements PacketGenerationStrateg
 
         if(!generator.isRunning() && currentTime >= generator.getStartTime()) {
             generator.setRunning(true);
-            nextOnDuration = generator.getExpRandom(onDuration);
-            nextOffDuration = generator.getExpRandom(offDuration);
+            startOfNextBurst = currentTime;
+            startOfNextIdle = startOfNextBurst + generator.getExpRandom(offDuration);
+            intervalBetweenPackets =  generator.getPacketSizeInBytes()/burstRateInBps;
         }
-        double interval = packetSizeInBytes/(double)burstRateInBps;
-        double burstLength = nextOnDuration/interval; //in packets
 
+        double difference = Math.abs(currentTime - startOfNextIdle);
 
-        //TODO: set next off duration
-        if(generator.isRunning() && packetsSentInCurrentBurst < burstLength) {
-            packetsSentInCurrentBurst++;
-            return interval;
+        if(generator.isRunning() && currentTime < startOfNextIdle && difference > 1e-10) {
+            return intervalBetweenPackets;
         } else {
-            packetsSentInCurrentBurst = 0;
-            nextOnDuration = generator.getExpRandom(onDuration);
-            return generator.getExpRandom(offDuration);
+            double idleDuration = generator.getExpRandom(offDuration);
+            totalIdleDuration += idleDuration;
+            startOfNextBurst = currentTime + idleDuration;
+            double nextBurstDuration = generator.getExpRandom(onDuration);
+            totalBurstDuration += nextBurstDuration;
+            startOfNextIdle = startOfNextBurst + nextBurstDuration;
+            totalPeriods++;
+            //java.lang.System.out.println("Avg burst duration: " + (totalBurstDuration/(double)totalPeriods));
+            //java.lang.System.out.println("Avg idle duration: " + (totalIdleDuration/(double)totalPeriods));
+            return idleDuration;
         }
     }
 }

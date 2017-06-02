@@ -1,8 +1,3 @@
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
-import java.util.*;
-import java.util.function.BiConsumer;
-
 public class Server {
     private double spacingTime;
     private double serviceBitrate; //C[b/s]
@@ -10,6 +5,7 @@ public class Server {
 
     public Server(double serviceBitrate) {
         this.spacingTime = 0.0;
+        this.isBusy = false;
         this.serviceBitrate = serviceBitrate;
     }
 

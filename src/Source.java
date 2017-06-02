@@ -39,7 +39,7 @@ public class Source {
         this.packetSizeInBytes = packetSizeInBytes;
     }
 
-    public double getNextArrival() {
+    public double getTimeToNextArrival() {
         return strategy.getTimeToNextArrival(this);
     }
 

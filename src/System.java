@@ -1,19 +1,20 @@
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public class System {
     private EventList eventList;
     private Server server;
     private HashMap<Integer, QueuePQWFQ> queues;
     private HashMap<Integer, Source> sources;
-    private PacketGenerationStrategy defaultStrategy;
     private Statistics statistics;
 
-    System(Server server) {
+    public System(double serverBitrate) {
+        this(new Server(serverBitrate));
+    }
+
+    public System(Server server) {
         eventList = new EventList();
         queues = new HashMap<>();
         sources = new HashMap<>();
-        defaultStrategy = new ExponentialPacketGenerationStrategy(1);
         this.server = server;
         statistics = new Statistics();
     }
@@ -24,9 +25,9 @@ public class System {
 
     public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
         if(queue.getPriority() == QueuePQWFQ.HIGH_PRIORITY && hasHighPriorityQueue())
-            throw new IllegalArgumentException("Server already has a high priority queue!");
+            throw new IllegalArgumentException("System already has a high priority queue!");
         else if(queues.containsKey(queueId))
-            throw new IllegalArgumentException("Server already has queue with such id!");
+            throw new IllegalArgumentException("Queue with this ID already exists!");
         else {
             queues.put(queueId, queue);
             statistics.registerQueue(queueId);
@@ -34,13 +35,14 @@ public class System {
         //TODO: Should method check if sum of weights does not exceed 1?
     }
 
-    public void addSource(int sourceId, double startTime, int packetSizeInBytes) {
-        sources.put(sourceId, new Source(startTime, packetSizeInBytes, defaultStrategy));
-    } //TODO: throw exceptions
-
-    public void addSource(int sourceId, double startTime, int packetSizeInBytes, PacketGenerationStrategy strategy) {
-        sources.put(sourceId, new Source(startTime, packetSizeInBytes, strategy));
-        scheduleNextArrival(sourceId);
+    public void addSource(int sourceId, double startTime, int packetSizeInBytes, PacketGenerationStrategy strategy)
+            throws IllegalArgumentException {
+        if(sources.containsKey(sourceId))
+            throw new IllegalArgumentException("Source with this ID already exists!");
+        else {
+            sources.put(sourceId, new Source(startTime, packetSizeInBytes, strategy));
+            scheduleNextArrival(sourceId);
+        }
     }
 
     private void addEvent(Event event) {
@@ -77,7 +79,7 @@ public class System {
         } else {
             server.setIsBusy(true);
             server.setSpacingTime(packet.getVirtualSpacingTimestamp());
-            addDelayToStatistics(queueId, 0.0);
+            statistics.addDelayToStatistics(queueId, 0.0);
             scheduleNextDeparture(packet.getSize());
         }
     }
@@ -93,23 +95,26 @@ public class System {
             double waitingTime = Clock.getCurrentTime() - clientArrivalTime;
 
             server.setSpacingTime(handledPacket.getVirtualSpacingTimestamp());
-            addDelayToStatistics(queueId, waitingTime);
+            statistics.addDelayToStatistics(queueId, waitingTime);
             scheduleNextDeparture(handledPacket.getSize());
         }
     }
 
     private void scheduleNextArrival(int id) {
-        double timeToNextArrival = sources.get(id).getNextArrival();
-        statistics.increaseSumOfArrivalIntervals(timeToNextArrival);
+        double timeToNextArrival = sources.get(id).getTimeToNextArrival();
+        statistics.increaseQueueArrivalInterval(id, timeToNextArrival);
         double nextArrivalTime = Clock.getCurrentTime() + timeToNextArrival;
         addEvent(new Event(EventType.ARRIVAL, nextArrivalTime, id));
     }
 
     private void scheduleNextDeparture(int packetSizeInBytes){
         double serviceTime = (packetSizeInBytes*8)/server.getServiceBitrate();
-        statistics.increaseTotalServiceTime(serviceTime);
         double nextDepartureTime = Clock.getCurrentTime() + serviceTime;
         addEvent(new Event(EventType.DEPARTURE, nextDepartureTime));
+    }
+
+    private Packet handleNextClient(int queueId) {
+        return queues.get(queueId).poll();
     }
 
     private int pqwfqDepartureAlgorithm() {
@@ -163,10 +168,6 @@ public class System {
         return new Packet(timestamp, packetSize);
     }
 
-    private Packet handleNextClient(int queueId) {
-        return queues.get(queueId).poll();
-    }
-
     private boolean areAllQueuesEmpty() {
         boolean flag = true;
         for(QueuePQWFQ queue : queues.values()) {
@@ -174,10 +175,6 @@ public class System {
                 flag = false;
         }
         return flag;
-    }
-
-    private int getQueueSize(int queueId) {
-        return queues.get(queueId).size();
     }
 
     private boolean hasHighPriorityQueue() {
@@ -203,11 +200,6 @@ public class System {
         queues.forEach((id, queue) -> statistics.increaseQueueTime(id,queue.size() * timeDelta));
     }
 
-    private void addDelayToStatistics(int queueId, double delay) {
-        statistics.increaseTotalDelay(queueId, delay);
-        statistics.increaseNumberOfDelays(queueId);
-    }
-
     private boolean isServerBusy() {
         return server.isBusy();
     }
@@ -228,19 +220,17 @@ public class System {
         java.lang.System.out.println("Is server busy?: " + isServerBusy());
         queues.forEach((id, queue) -> {
             java.lang.System.out.println("-----------------------------------------------");
-            java.lang.System.out.println("QUEUE " + id);
+            java.lang.System.out.println("QUEUE " + id +  " (priority: " + queue.getPriority() + ")");
             Statistics.QueueStatistics stats = statistics.getQueueStatistics(id);
             java.lang.System.out.println("Number of delays: " + stats.numberOfDelays);
             java.lang.System.out.println("Total delay: " + stats.totalDelay);
             java.lang.System.out.println("Q(t): " + stats.queueTime);
-            java.lang.System.out.print("Clients in queue " + id + ": " + getQueueSize(id));
-            java.lang.System.out.println(" (priority: " + queue.getPriority() + ")");
+            java.lang.System.out.println("Clients in queue: " + queue.size());
             if(!queue.isEmpty())
                 java.lang.System.out.println("Lowest timestamp: " + queue.peekLowestTimestamp());
         });
         java.lang.System.out.println("Next event: " + eventList.peekNextEvent().getEventType());
         java.lang.System.out.println("Source number: " + eventList.peekNextEvent().getQueueId());
-        java.lang.System.out.println("-----------------------------------------------");
-        java.lang.System.out.println();
+        java.lang.System.out.println("-----------------------------------------------\n");
     }
 }

@@ -16,12 +16,16 @@ public class Clock {
         getInstance().currentTime = 0.0;
     }
 
-    //0.001 = 1 millisecond TODO: maybe round values somehow?
+    //1 = 1 second, 0.001 = 1 millisecond
     public static double getCurrentTime() {
         return getInstance().currentTime;
     }
 
     public static void setTime(double time) {
         getInstance().currentTime = time;
+    }
+
+    public static void increaseTime(double timeToAdd) {
+        getInstance().currentTime += timeToAdd;
     }
 }
