@@ -27,6 +27,10 @@ public class Source {
         isRunning = false;
     }
 
+    public void setStrategy(PacketGenerationStrategy strategy) {
+        this.strategy = strategy;
+    }
+
     public int getPacketSizeInBytes() {
         return packetSizeInBytes;
     }
@@ -40,7 +44,7 @@ public class Source {
     }
 
     public double getExpRandom(double mean) {
-        return Math.log(1 - random.nextDouble()) / (-mean);
+        return Math.log(1 - random.nextDouble())*(-mean);
     }
 
     public double getPoissonRandom(double mean) {
