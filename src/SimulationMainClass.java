@@ -1,24 +1,23 @@
-import source.ExponentialPacketGenerationStrategy;
-import source.OnOffExpPacketGenerationStrategy;
+import source.strategies.ExponentialPacketGenerationStrategy;
+import source.strategies.OnOffExpPacketGenerationStrategy;
 import components.QueuePQWFQ;
 import components.Statistics;
 import components.System;
 
 public class SimulationMainClass {
     public static void main(String[] args) {
-
+        //TODO: move it to configuration file?
         final int N = 70000000; //number of arrivals
-        final double lambda_lp = 5; //arrival intensity for low priority queues
-        final double lambda_hp = 1;
+
         final OnOffExpPacketGenerationStrategy onOffStrategy = new OnOffExpPacketGenerationStrategy(0.5, 1, 1000);
-        final ExponentialPacketGenerationStrategy lpstrategy = new ExponentialPacketGenerationStrategy(lambda_lp);
-        final ExponentialPacketGenerationStrategy hpstrategy = new ExponentialPacketGenerationStrategy(lambda_hp);
+        final ExponentialPacketGenerationStrategy lpstrategy = new ExponentialPacketGenerationStrategy(5);
+        final ExponentialPacketGenerationStrategy hpstrategy = new ExponentialPacketGenerationStrategy(1);
+
         final double C = 9000; //server service bitrate [b/s]
 
         System system = new System(C);
         try {
             system.addQueue(3, QueuePQWFQ.HIGH_PRIORITY, C);
-            //TODO: change weights to bitrate Ci
             system.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 4500);
             system.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 4500);
 

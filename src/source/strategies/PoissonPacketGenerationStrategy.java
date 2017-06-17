@@ -1,4 +1,6 @@
-package source;
+package source.strategies;
+
+import source.Source;
 
 public class PoissonPacketGenerationStrategy implements PacketGenerationStrategy {
     private double mean;

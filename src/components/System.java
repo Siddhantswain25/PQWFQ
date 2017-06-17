@@ -2,6 +2,8 @@ package components;
 
 import source.*;
 import events.*;
+import source.strategies.PacketGenerationStrategy;
+
 import java.util.*;
 
 public class System {
@@ -34,7 +36,7 @@ public class System {
             throw new IllegalArgumentException("Queue with this ID already exists!");
         else {
             queues.put(queueId, queue);
-            statistics.registerQueue(queueId);
+            statistics.registerQueue(queueId, queue.getPriority());
         }
     }
 
@@ -99,6 +101,7 @@ public class System {
 
             server.setSpacingTime(handledPacket.getVirtualSpacingTimestamp());
             statistics.addDelayToStatistics(queueId, waitingTime);
+            statistics.increaseBytesServiced(queueId, handledPacket.getSize());
             scheduleNextDeparture(handledPacket.getSize());
         }
     }

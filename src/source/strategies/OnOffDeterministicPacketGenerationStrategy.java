@@ -1,6 +1,7 @@
-package source;
+package source.strategies;
 
 import components.Clock;
+import source.Source;
 
 public class OnOffDeterministicPacketGenerationStrategy implements PacketGenerationStrategy {
     private double onDuration;

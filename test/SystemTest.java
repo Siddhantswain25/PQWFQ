@@ -2,7 +2,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import source.ExponentialPacketGenerationStrategy;
+import source.strategies.ExponentialPacketGenerationStrategy;
 import components.*;
 import components.System;
 
