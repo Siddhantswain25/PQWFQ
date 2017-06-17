@@ -17,10 +17,10 @@ public class SimulationMainClass {
 
         System system = new System(C);
         try {
-            system.addQueue(3, QueuePQWFQ.HIGH_PRIORITY, 1);
+            system.addQueue(3, QueuePQWFQ.HIGH_PRIORITY, C);
             //TODO: change weights to bitrate Ci
-            system.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 0.3);
-            system.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 0.3);
+            system.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 4500);
+            system.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 4500);
 
             system.addSource(3, 0, 100, hpstrategy);
             system.addSource(2, 0, 100, lpstrategy);

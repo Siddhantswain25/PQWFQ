@@ -23,8 +23,8 @@ public class System {
         statistics = new Statistics();
     }
 
-    public void addQueue(int queueId, int priority, double weight) throws IllegalArgumentException {
-        addQueue(queueId, new QueuePQWFQ(priority, weight));
+    public void addQueue(int queueId, int priority, double bandwidth) throws IllegalArgumentException {
+        addQueue(queueId, new QueuePQWFQ(priority, bandwidth));
     }
 
     public void addQueue(int queueId, QueuePQWFQ queue) throws IllegalArgumentException {
@@ -166,7 +166,7 @@ public class System {
     private Packet wfqArrivalAlgorithm(Event event) {
         int id = event.getQueueId();
         double vst = queues.get(id).getVirtualSpacingTimestamp();
-        double ri = queues.get(id).getWeight();
+        double ri = queues.get(id).getBandwidth()/server.getServiceBitrate();
         int packetSize = sources.get(id).getPacketSizeInBytes();
 
         double timestamp = Math.max(server.getSpacingTime(), vst) + (packetSize/ri);

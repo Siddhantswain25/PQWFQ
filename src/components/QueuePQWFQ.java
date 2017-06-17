@@ -12,13 +12,13 @@ public class QueuePQWFQ {
 
     private Queue<Packet> queue;
     private int priority;
-    private double weight; //ri
+    private double bandwidth; //reserved bandwidth in b/s
     private double virtualSpacingTimestamp; //VSi
 
-    QueuePQWFQ(int priority, double weight) {
+    QueuePQWFQ(int priority, double bandwidth) {
         queue = new PriorityQueue<>(5, Comparator.comparingDouble(Packet::getVirtualSpacingTimestamp));
         this.priority = priority;
-        this.weight = weight;
+        this.bandwidth = bandwidth;
         this.virtualSpacingTimestamp = 0.0;
     }
 
@@ -38,8 +38,8 @@ public class QueuePQWFQ {
         return priority;
     }
 
-    public double getWeight() {
-        return weight;
+    public double getBandwidth() {
+        return bandwidth;
     }
 
     public double getVirtualSpacingTimestamp() {
