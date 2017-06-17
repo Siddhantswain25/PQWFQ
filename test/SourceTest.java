@@ -1,12 +1,12 @@
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import source.*;
+import components.Clock;
 
 import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SourceTest {
     private Source generator;

@@ -1,3 +1,5 @@
+package components;
+
 public class Server {
     private double spacingTime;
     private double serviceBitrate; //C[b/s]

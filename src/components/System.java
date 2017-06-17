@@ -1,3 +1,7 @@
+package components;
+
+import source.*;
+import events.*;
 import java.util.*;
 
 public class System {
@@ -32,7 +36,6 @@ public class System {
             queues.put(queueId, queue);
             statistics.registerQueue(queueId);
         }
-        //TODO: Should method check if sum of weights does not exceed 1?
     }
 
     public void addSource(int sourceId, double startTime, int packetSizeInBytes, PacketGenerationStrategy strategy)
@@ -124,7 +127,7 @@ public class System {
                 id = getHighPriorityQueueId();
                 if(!queues.get(id).isEmpty())
                     return id;
-            } catch(NoSuchQueueException e) {
+            } catch(NoSuchElementException e) {
                 return getIdOfQueueWithTheLowestTimestampOfNextPacket();
             }
         }
@@ -151,10 +154,13 @@ public class System {
                 }
             }
         }
-        return id.stream()
-                .skip((int)(id.size() * Math.random()))
-                .findFirst()
-                .orElse(1); //TODO: well... find a more elegant way
+
+        if(id.size() == 1)
+            return id.get(0);
+        else {
+            int index = (int)(id.size() * Math.random());
+            return id.get(index);
+        }
     }
 
     private Packet wfqArrivalAlgorithm(Event event) {
@@ -185,12 +191,12 @@ public class System {
         return false;
     }
 
-    private int getHighPriorityQueueId() throws NoSuchQueueException {
+    private int getHighPriorityQueueId() throws NoSuchElementException {
         for(Map.Entry<Integer, QueuePQWFQ> q : queues.entrySet()) {
             if(q.getValue().getPriority() == QueuePQWFQ.HIGH_PRIORITY)
                 return q.getKey();
         }
-        throw new NoSuchQueueException();
+        throw new NoSuchElementException("No such queue!");
     }
 
     private void updateStatistics(double timeDelta) {

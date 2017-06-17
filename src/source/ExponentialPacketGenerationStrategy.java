@@ -1,3 +1,5 @@
+package source;
+
 public class ExponentialPacketGenerationStrategy implements PacketGenerationStrategy {
     private double lambda;
 

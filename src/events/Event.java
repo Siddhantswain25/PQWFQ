@@ -1,3 +1,5 @@
+package events;
+
 public class Event {
     public static final int SERVER_EVENT = -1;
 

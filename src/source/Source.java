@@ -1,14 +1,13 @@
+package source;
+
 import java.lang.*;
 import java.lang.System;
 import java.util.ArrayList;
 import java.util.Random;
-/*
-Random.nextDouble();
-Returns the next pseudorandom, uniformly distributed double value
-between 0.0 and 1.0 from this random number generator's sequence.
-*/
 
-//TODO: test class
+/* Random.nextDouble();
+ * Returns the next pseudorandom, uniformly distributed double value
+ * between 0.0 and 1.0 from this random number generator's sequence. */
 public class Source {
     public final static double MIN_ARRIVAL_INTERVAL = 0.000001;
 

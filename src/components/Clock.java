@@ -1,3 +1,5 @@
+package components;
+
 public class Clock {
     private static Clock instance = null;
     private Clock() {

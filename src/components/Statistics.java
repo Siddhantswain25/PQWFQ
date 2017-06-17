@@ -1,3 +1,5 @@
+package components;
+
 import java.util.HashMap;
 
 public class Statistics {
@@ -18,7 +20,7 @@ public class Statistics {
     }
 
     public void addDelayToStatistics(int queueId, double delay) {
-        increaseTotalDelay(queueId, delay);
+        queueStatistics.get(queueId).totalDelay += delay;
         queueStatistics.get(queueId).numberOfDelays++;
     }
 
@@ -28,10 +30,6 @@ public class Statistics {
 
     public void increaseNumberOfArrivals() {
         this.numberOfArrivals++;
-    }
-
-    public void increaseTotalDelay(int queueId, double totalDelay) {
-        this.queueStatistics.get(queueId).totalDelay += totalDelay;
     }
 
     public void increaseQueueTime(int queueId, double queueTime) {

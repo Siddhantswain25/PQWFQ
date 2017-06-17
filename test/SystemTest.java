@@ -2,7 +2,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-//TODO: write tests
+import source.ExponentialPacketGenerationStrategy;
+import components.*;
+import components.System;
+
+
 class SystemTest {
 
     private System system;
@@ -10,7 +14,7 @@ class SystemTest {
 
     @BeforeEach
     void setUp() {
-        N = 500;
+        N = 5000;
     }
 
     @AfterEach
@@ -42,7 +46,7 @@ class SystemTest {
 
     @Test
     void twoLowPriorityQueues() throws IllegalArgumentException {
-        final ExponentialPacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(1);
+        final ExponentialPacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(5);
         final double C = 1000; //server service bitrate [b/s]
 
         system = new System(new Server(C));

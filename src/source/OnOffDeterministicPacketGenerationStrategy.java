@@ -1,4 +1,6 @@
-import static java.lang.StrictMath.abs;
+package source;
+
+import components.Clock;
 
 public class OnOffDeterministicPacketGenerationStrategy implements PacketGenerationStrategy {
     private double onDuration;
@@ -30,7 +32,7 @@ public class OnOffDeterministicPacketGenerationStrategy implements PacketGenerat
             return intervalBetweenPackets;
         } else {
             startOfNextBurst = currentTime + offDuration;
-            startOfNextIdle = startOfNextBurst + offDuration;
+            startOfNextIdle = startOfNextBurst + onDuration;
             return offDuration;
         }
     }

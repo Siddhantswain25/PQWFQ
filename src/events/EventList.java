@@ -1,3 +1,5 @@
+package events;
+
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
