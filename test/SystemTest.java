@@ -2,18 +2,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import source.ExponentialPacketGenerationStrategy;
+import components.*;
+import components.System;
+
+
 class SystemTest {
 
     private System system;
     private int N;
-    private double lambda = 0.4;
-    private double mi = 0.5;
-    private int nominalPacketSizeInBytes = 100;
-    private int serverServiceBitrate = 4000; //4kbps = 0.5kBps = 5 packets per second (if packet_size = 100B)
 
     @BeforeEach
     void setUp() {
-        N = 700;
+        N = 5000;
     }
 
     @AfterEach
@@ -25,47 +26,68 @@ class SystemTest {
 
     @Test
     void oneHighPriorityQueue() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1.0, nominalPacketSizeInBytes));
-        system =  new System(server);
+        final ExponentialPacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(1);
+        final double C = 1000; //server service bitrate [b/s]
 
-        system.displayTrace();
+       system = new System(new Server(C));
+        try {
+            system.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1);
+            system.addSource(1, 0, 10, strategy);
+        } catch (IllegalArgumentException e) { e.printStackTrace(); }
+
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.getStatistics().displayAllStatistics();
+
+        Statistics statistics = system.getStatistics();
+        statistics.displayAllStatistics();
     }
 
     @Test
     void twoLowPriorityQueues() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
-        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
-        system =  new System(server);
+        final ExponentialPacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(5);
+        final double C = 1000; //server service bitrate [b/s]
 
-        system.displayTrace();
+        system = new System(new Server(C));
+        try {
+            system.addQueue(1, QueuePQWFQ.LOW_PRIORITY, 1);
+            system.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 1);
+            system.addSource(1, 0, 10, strategy);
+            system.addSource(2, 0, 10, strategy);
+        } catch (IllegalArgumentException e) { e.printStackTrace(); }
+
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.getStatistics().displayAllStatistics();
+
+        Statistics statistics = system.getStatistics();
+        statistics.displayAllStatistics();
     }
 
     @Test
     void oneHighAndTwoLowPriorityQueues() throws IllegalArgumentException {
-        Server server = new Server(serverServiceBitrate);
-        server.addQueue(1, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
-        server.addQueue(2, new QueuePQWFQ(QueuePQWFQ.LOW_PRIORITY, 0.5, nominalPacketSizeInBytes));
-        server.addQueue(3, new QueuePQWFQ(QueuePQWFQ.HIGH_PRIORITY, 1, nominalPacketSizeInBytes));
-        system =  new System(server);
+        final ExponentialPacketGenerationStrategy strategy = new ExponentialPacketGenerationStrategy(1);
+        final double C = 1000; //server service bitrate [b/s]
 
-        system.displayTrace();
+        System system = new System(new Server(C));
+        try {
+            system.addQueue(1, QueuePQWFQ.HIGH_PRIORITY, 1);
+            system.addQueue(2, QueuePQWFQ.LOW_PRIORITY, 0.5);
+            system.addQueue(3, QueuePQWFQ.LOW_PRIORITY, 0.5);
+            system.addSource(1, 0, 10, strategy);
+            system.addSource(2, 0, 10, strategy);
+            system.addSource(3, 0, 10, strategy);
+        } catch (IllegalArgumentException e) { e.printStackTrace(); }
+
         while(system.getNumberOfArrivals() < N) {
             system.processNextEvent();
             system.displayTrace();
         }
-        system.getStatistics().displayAllStatistics();
+
+        Statistics statistics = system.getStatistics();
+        statistics.displayAllStatistics();
     }
 
 }
